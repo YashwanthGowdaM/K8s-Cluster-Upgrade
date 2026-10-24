@@ -1,23 +1,78 @@
-# EKS Cluster: Backup + Upgrade Guide (1.34 → 1.35 → 1.36)
+<div align="center">
+
+# ☸️ Amazon EKS Cluster: Backup + Upgrade Guide
+
+### Safely upgrade your cluster **1.34 → 1.35 → 1.36**, with backups at every step
+
+[![Amazon EKS](https://img.shields.io/badge/Amazon-EKS-FF9900?style=for-the-badge&logo=amazoneks&logoColor=white)](https://aws.amazon.com/eks/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-1.34→1.36-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
+[![eksctl](https://img.shields.io/badge/eksctl-CLI-2E7D32?style=for-the-badge)](https://eksctl.io/)
+[![Velero](https://img.shields.io/badge/Velero-Backup-0B6EFD?style=for-the-badge)](https://velero.io/)
+![Level](https://img.shields.io/badge/Level-Beginner%20Friendly-brightgreen?style=for-the-badge)
+
+*A beginner-friendly, copy-paste guide for a managed EKS cluster.*
+
+</div>
+
+---
 
 > [!NOTE]
 > This guide focuses on the **generic Kubernetes/EKS upgrade process** and is intended to be followed in most environments.
 >
 > If you want to compare these steps with the **actual commands and workflow used during my upgrade**, refer to **[actual_implementation_Steps.md](actual_implementation_Steps.md)**. That document contains the real implementation sequence, command history, and observations from the upgrade.
 
-A beginner-friendly, copy-paste guide for the cluster created with:
-> **Recommended:** [Cluster Setup Guide](00.Cluster_step_Up.md) for cluster setup
+> [!TIP]
+> **Recommended:** See the [Cluster Setup Guide](00.Cluster_step_Up.md) for cluster setup.
+
+This guide is written for the cluster created with:
+
 ```bash
 eksctl create cluster --name my-eks-cluster --nodegroup-name my-worker-node \
   --node-type t2.medium --nodes 2 --managed --region us-east-1
 ```
 
-**What you will achieve**
+---
+
+## 📑 Table of Contents
+
+| # | Section | What you'll do |
+|---|---------|----------------|
+| 0 | [Read this first](#0-read-this-first-5-minutes) | Glossary, etcd reality check, upgrade rules, cost |
+| 1 | [Prerequisites & health check](#1-prerequisites-and-health-check) | Verify tools, credentials, cluster and pods |
+| 2 | [**Task 1:** Backup](#2-task-1-backup-etcd-data--api-server-objects--cluster-config) | YAML export, AWS config, S3 copy, Velero |
+| 3 | [**Task 2:** Upgrade 1.34 → 1.35](#3-task-2-upgrade-the-cluster-134--135-then--136) | Control plane, add-ons, worker nodes |
+| 4 | [Upgrade 1.35 → 1.36](#4-upgrade-from-135--136-optional-second-hop) | Optional second hop |
+| 5 | [Troubleshooting](#5-troubleshooting) | Symptoms, causes and fixes |
+| 6 | [Cleanup](#6-cleanup-stop-paying-for-the-lab) | Stop paying for the lab |
+| 7 | [Quick-reference checklist](#7-quick-reference-checklist) | One-page recap |
+| A | [Appendix](#appendix-real-etcd-snapshot-only-for-self-managed-clusters) | Real etcd snapshot (self-managed only) |
+
+---
+
+## 🎯 What You Will Achieve
 
 | Task | What it means on EKS |
 |------|----------------------|
-| Part 2 – "Back up etcd & API server" | Save every Kubernetes object (the data etcd stores, read through the API server) + the AWS-side cluster config |
-| Part 3 – Upgrade | Move the cluster **1.34 → 1.35** and then, optionally, **1.35 → 1.36** |
+| **Part 2 – "Back up etcd & API server"** | Save every Kubernetes object (the data etcd stores, read through the API server) + the AWS-side cluster config |
+| **Part 3 – Upgrade** | Move the cluster **1.34 → 1.35** and then, optionally, **1.35 → 1.36** |
+
+### 🗺️ Workflow at a Glance
+
+```mermaid
+flowchart LR
+    A[1. Health check] --> B[2. Backup]
+    B --> B1[YAML export]
+    B --> B2[AWS config]
+    B --> B3[S3 copy]
+    B --> B4[Velero optional]
+    B1 & B2 & B3 & B4 --> C[3. Pre-upgrade checks]
+    C --> D[Control plane]
+    D --> E[Add-ons]
+    E --> F[Worker nodes]
+    F --> G{Verify}
+    G -->|Healthy| H[Next minor version or done]
+    G -->|Issue| I[Troubleshoot / restore app]
+```
 
 ---
 
@@ -49,15 +104,18 @@ So "backup of etcd & API server" = steps in Part 2.
 
 ### 0.3 Upgrade rules you must know
 
-* EKS upgrades **one minor version at a time**. You **cannot jump 1.34 → 1.36**. Do **1.34 → 1.35**, then **1.35 → 1.36**.
-* Order is always: **(1) control plane → (2) add-ons → (3) worker nodes**.
-* **A control plane upgrade cannot be rolled back.** That is why we back up first.
+> [!IMPORTANT]
+> * EKS upgrades **one minor version at a time**. You **cannot jump 1.34 → 1.36**. Do **1.34 → 1.35**, then **1.35 → 1.36**.
+> * Order is always: **(1) control plane → (2) add-ons → (3) worker nodes**.
+> * **A control plane upgrade cannot be rolled back.** That is why we back up first.
+
 * The control plane upgrade has no downtime for the API in normal cases; worker nodes are replaced one at a time (rolling).
 * At the time of writing, AWS lists 1.35 and 1.36 as available in standard support. Confirm with the command in Step 1.4.
 
 ### 0.4 Cost warning
 
-An EKS control plane costs about **$0.10 per hour** plus EC2 nodes. Delete the cluster when finished practising (see Part 6).
+> [!WARNING]
+> An EKS control plane costs about **$0.10 per hour** plus EC2 nodes. Delete the cluster when finished practising (see [Part 6](#6-cleanup-stop-paying-for-the-lab)).
 
 ---
 
@@ -100,6 +158,7 @@ aws sts get-caller-identity
 
 If you get `Unable to locate credentials`, run `aws configure` and enter your Access Key, Secret Key, region `us-east-1`, output `json`.
 
+> [!NOTE]
 > Use the same IAM user/role that created the cluster. It needs permissions for EKS, EC2, IAM, CloudFormation and S3.
 
 ### 1.3 Connect `kubectl` to the cluster
@@ -156,6 +215,7 @@ aws eks describe-cluster-versions --region $REGION \
 
 **Expected output (similar):** a table where `1.35` and `1.36` appear with status `STANDARD_SUPPORT`.
 
+> [!TIP]
 > If `describe-cluster-versions` is not recognised, your AWS CLI is old. Update it (re-run the AWS-CLI install steps; add `--update` to `sudo ./aws/install`).
 
 ### 1.5 (Recommended) Deploy a sample app so you can prove nothing breaks
@@ -194,6 +254,13 @@ kubectl get pods -A
 ## 2. TASK 1: Backup (etcd data + API server objects + cluster config)
 
 Do **Step 2.1 and 2.2 always**. **Method B (Velero)** is optional but recommended if you have persistent volumes or want one-command restore.
+
+| Step | Method | What it protects | Required? |
+|------|--------|------------------|-----------|
+| 2.1 | **Method A:** YAML export | All Kubernetes objects | ✅ Always |
+| 2.2 | AWS config export | Cluster, node group, add-ons config | ✅ Always |
+| 2.3 | S3 copy | Off-machine copy of the above | ⭐ Recommended |
+| 2.5 | **Method B:** Velero | Objects + EBS volume snapshots, easy restore | 🔹 Optional |
 
 ### Step 2.1: Method A: Export every Kubernetes object to YAML files
 
@@ -269,7 +336,8 @@ ls ~/eks-backups/k8s-backup-*/namespaced/demo/
 configmaps.yaml  deployments.apps.yaml  pods.yaml  replicasets.apps.yaml  serviceaccounts.yaml  services.yaml
 ```
 
-> ⚠️ **Security:** the backup contains **Secrets** (base64, not encrypted). Never commit it to Git or share it. Restrict access: `chmod -R go-rwx ~/eks-backups`.
+> [!CAUTION]
+> **Security:** the backup contains **Secrets** (base64, not encrypted). Never commit it to Git or share it. Restrict access: `chmod -R go-rwx ~/eks-backups`.
 
 ### Step 2.2: Back up the AWS-side cluster configuration
 
@@ -330,6 +398,7 @@ kubectl apply -f ~/eks-backups/k8s-backup-<STAMP>/namespaced/demo/deployments.ap
 kubectl apply -f ~/eks-backups/k8s-backup-<STAMP>/namespaced/demo/services.yaml
 ```
 
+> [!NOTE]
 > Exported YAML includes read-only fields (`status`, `uid`, `resourceVersion`). `kubectl apply` usually tolerates them for Deployments/Services, but for a full-cluster restore **Velero (Method B) is far easier and safer**.
 
 ---
@@ -478,7 +547,7 @@ NAME      PROVIDER   BUCKET/PREFIX                       PHASE       LAST VALIDA
 default   aws        velero-my-eks-cluster-123456789012  Available   10s ago
 ```
 
-`PHASE` must be **Available**. If it is `Unavailable`, see Troubleshooting.
+`PHASE` must be **Available**. If it is `Unavailable`, see [Troubleshooting](#5-troubleshooting).
 
 #### 2.5.5 Take the backup
 
@@ -518,13 +587,22 @@ kubectl get all -n demo
 
 **Expected output:** the `web` deployment, pods and service are back, as in Step 1.5.
 
-✅ **Checkpoint:** you now have (a) YAML backup, (b) AWS config backup, (c) copy in S3, and optionally (d) a Velero backup. **Task 1 is complete.**
+> [!IMPORTANT]
+> ✅ **Checkpoint:** you now have (a) YAML backup, (b) AWS config backup, (c) copy in S3, and optionally (d) a Velero backup. **Task 1 is complete.**
 
 ---
 
 ## 3. TASK 2: Upgrade the cluster 1.34 → 1.35 (then → 1.36)
 
-> Do the full cycle (Steps 3.1 to 3.5) for **1.35**. Then repeat 3.1 to 3.5 with `1.36` (see Part 4).
+> Do the full cycle (Steps 3.1 to 3.5) for **1.35**. Then repeat 3.1 to 3.5 with `1.36` (see [Part 4](#4-upgrade-from-135--136-optional-second-hop)).
+
+```mermaid
+flowchart LR
+    S1[3.1 Pre-checks] --> S2[3.2 Control plane<br/>10-20 min]
+    S2 --> S3[3.3 Add-ons]
+    S3 --> S4[3.4 Worker nodes<br/>10-25 min]
+    S4 --> S5[3.5 Verify]
+```
 
 Set the target:
 
@@ -589,6 +667,7 @@ The control plane upgrade needs a few free IPs in your cluster subnets, and the 
 eksctl upgrade cluster --name $CLUSTER --region $REGION --version $TARGET --approve
 ```
 
+> [!NOTE]
 > Without `--approve`, eksctl only shows a plan and does nothing (a safe "dry run").
 
 **Expected output (similar):**
@@ -603,7 +682,8 @@ eksctl upgrade cluster --name $CLUSTER --region $REGION --version $TARGET --appr
 2026-10-24 10:41:39 [ℹ]  all nodegroups have up-to-date cloudformation templates
 ```
 
-⏱ Takes **10 to 20 minutes**. Do not press Ctrl+C. If your terminal disconnects, the upgrade continues in AWS; check progress with:
+> [!WARNING]
+> ⏱ Takes **10 to 20 minutes**. Do not press Ctrl+C. If your terminal disconnects, the upgrade continues in AWS; check progress with the command below.
 
 ```bash
 aws eks describe-cluster --name $CLUSTER --region $REGION --query "cluster.{Version:version,Status:status}" --output text
@@ -617,7 +697,7 @@ aws eks describe-cluster --name $CLUSTER --region $REGION --query "cluster.{Vers
 kubectl version
 ```
 
-**Expected output:** `Server Version: v1.35.x-eks-xxxxxxx` (the *Client* version may differ; that's OK, but see Troubleshooting if it is more than 1 minor version away).
+**Expected output:** `Server Version: v1.35.x-eks-xxxxxxx` (the *Client* version may differ; that's OK, but see [Troubleshooting](#5-troubleshooting) if it is more than 1 minor version away).
 
 At this point the **nodes are still 1.34**. That is expected and supported temporarily.
 
@@ -629,7 +709,9 @@ Check how your add-ons are managed:
 eksctl get addon --cluster $CLUSTER --region $REGION
 ```
 
-**Case 1: the table lists `vpc-cni`, `kube-proxy`, `coredns` (managed add-ons).** Expected:
+#### Case 1: the table lists `vpc-cni`, `kube-proxy`, `coredns` (managed add-ons)
+
+Expected:
 
 ```
 NAME         VERSION               STATUS   ISSUES   IAMROLE   UPDATE AVAILABLE
@@ -664,7 +746,9 @@ eksctl update addon --name coredns    --cluster $CLUSTER --region $REGION --vers
 [✔]  addon "kube-proxy" active
 ```
 
-**Case 2: the table is empty (add-ons are self-managed).** Use:
+#### Case 2: the table is empty (add-ons are self-managed)
+
+Use:
 
 ```bash
 eksctl utils update-kube-proxy --cluster $CLUSTER --region $REGION --approve
@@ -739,7 +823,8 @@ aws eks describe-cluster --name $CLUSTER --region $REGION --query "cluster.versi
 * Demo app: `deployment.apps/web   2/2`.
 * Last command prints `1.35`.
 
-🎉 **Upgrade to 1.35 complete.**
+> [!IMPORTANT]
+> 🎉 **Upgrade to 1.35 complete.**
 
 ---
 
@@ -780,7 +865,7 @@ kubectl get nodes
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | `error: You must be logged in to the server (Unauthorized)` | Wrong AWS user/profile or expired credentials | Run `aws sts get-caller-identity`; use the same identity that created the cluster; re-run `aws eks update-kubeconfig ...` |
-| `The connection to the server ... was refused` / no context | kubeconfig missing | Re-run Step 1.3 |
+| `The connection to the server ... was refused` / no context | kubeconfig missing | Re-run [Step 1.3](#13-connect-kubectl-to-the-cluster) |
 | `eksctl upgrade cluster` only prints a plan | Forgot `--approve` | Add `--approve` |
 | `Unsupported Kubernetes minor version update from 1.34 to 1.36` | Skipping a version | Upgrade to 1.35 first |
 | Insights show `ERROR` | Deprecated/removed API or incompatible component | `aws eks describe-insight ...`, fix manifests/charts, re-check |
@@ -790,7 +875,7 @@ kubectl get nodes
 | `velero backup-location get` shows `Unavailable` | IAM role/bucket permissions wrong | `kubectl logs deployment/velero -n velero`; confirm role ARN annotation and bucket name; redo Step 2.5.3 |
 | `kubectl` warns about version skew | Client too far from server | Install a `kubectl` within ±1 minor of the server version (re-run the kubectl download step) |
 
-Useful debug commands:
+### 🔍 Useful debug commands
 
 ```bash
 kubectl describe node <node-name>
@@ -800,11 +885,12 @@ kubectl get events -A --sort-by=.lastTimestamp | tail -20
 eksctl utils describe-stacks --cluster $CLUSTER --region $REGION
 ```
 
-### Rollback reality check
+### ⏪ Rollback reality check
 
-* The EKS control plane **cannot be downgraded**.
-* If an app breaks after the upgrade, **restore the app** from backup (Step 2.4 or Velero restore), or fix the manifests for the new version.
-* In a real disaster you would create a new cluster and restore from the Velero backup into it.
+> [!CAUTION]
+> * The EKS control plane **cannot be downgraded**.
+> * If an app breaks after the upgrade, **restore the app** from backup (Step 2.4 or Velero restore), or fix the manifests for the new version.
+> * In a real disaster you would create a new cluster and restore from the Velero backup into it.
 
 ---
 
@@ -847,7 +933,7 @@ aws s3 rb s3://$VELERO_BUCKET --force
 
 ---
 
-### Appendix: "Real" etcd snapshot (only for self-managed clusters)
+## Appendix: "Real" etcd snapshot (only for self-managed clusters)
 
 If you ever run a **self-built** cluster (kubeadm, not EKS) you can snapshot etcd directly on a control-plane node:
 
@@ -859,4 +945,15 @@ sudo ETCDCTL_API=3 etcdctl snapshot save /backup/etcd-snapshot.db \
   --key=/etc/kubernetes/pki/etcd/server.key
 ```
 
-This is **not possible on EKS**; use Part 2 instead.
+> [!NOTE]
+> This is **not possible on EKS**; use [Part 2](#2-task-1-backup-etcd-data--api-server-objects--cluster-config) instead.
+
+---
+
+<div align="center">
+
+**⭐ If this guide helped you, consider starring the repository.**
+
+*Back up first, upgrade one minor version at a time, verify at every step.*
+
+</div>

@@ -69,9 +69,10 @@ aws --version
 **Expected output (versions will differ):**
 
 ```
-0.2xx.0
-Client Version: v1.3x.x
-aws-cli/2.xx.x Python/3.xx Linux/x86_64 ...
+0.231.0
+Client Version: v1.37.1
+Kustomize Version: v5.8.1
+aws-cli/2.38.5 Python/3.14.8 Linux/7.0.0-1014-aws exe/x86_64.ubuntu.26
 ```
 
 If a command says `command not found`, redo that install step from your setup notes.

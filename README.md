@@ -6,7 +6,7 @@
 > If you want to compare these steps with the **actual commands and workflow used during my upgrade**, refer to **[actual_implementation_Steps.md](actual_implementation_Steps.md)**. That document contains the real implementation sequence, command history, and observations from the upgrade.
 
 A beginner-friendly, copy-paste guide for the cluster created with:
-
+> **Recommended:** [Cluster Setup Guide](00.Cluster_step_Up.md) for cluster setup
 ```bash
 eksctl create cluster --name my-eks-cluster --nodegroup-name my-worker-node \
   --node-type t2.medium --nodes 2 --managed --region us-east-1

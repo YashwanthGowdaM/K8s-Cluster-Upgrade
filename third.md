@@ -1870,6 +1870,12 @@ aws eks describe-cluster --name $CLUSTER --region $REGION --query "cluster.versi
 
 🎉 **Upgrade to 1.35 complete.** Wait until everything above is healthy (ideally an hour, or a day of normal running) before starting Part 4.
 
+> [!Note]
+> **If your goal is only a single-hop upgrade** (for example, **Kubernetes 1.34 → 1.35**), you do **not** need to continue with the remaining upgrade sections.
+
+> [!IMPORTANT]
+> After the control plane and managed node group have been successfully upgraded to **1.35**, perform the **final validation checks** by running **Steps 4.4.2 through 4.4.17** to verify that the cluster is healthy before considering the upgrade complete.
+
 ---
 
 ## 4. Upgrade from 1.35 → 1.36 (second hop)

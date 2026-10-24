@@ -1,5 +1,10 @@
 # EKS Cluster: Backup + Upgrade Guide (1.34 → 1.35 → 1.36)
 
+> [!NOTE]
+> This guide focuses on the **generic Kubernetes/EKS upgrade process** and is intended to be followed in most environments.
+>
+> If you want to compare these steps with the **actual commands and workflow used during my upgrade**, refer to **[actual_implementation_Steps.md](actual_implementation_Steps.md)**. That document contains the real implementation sequence, command history, and observations from the upgrade.
+
 A beginner-friendly, copy-paste guide for the cluster created with:
 
 ```bash

@@ -62,33 +62,100 @@ An EKS control plane costs about **$0.10 per hour** plus EC2 nodes (during a nod
 
 ### 1.1 Confirm the tools are installed
 
-If `eksctl` is missing, install the latest release:
+#### 1.1.a Install `eksctl` (only if it is missing): download
+
+**Explanation**
+Downloads the latest `eksctl` release and unpacks it into `/tmp`.
+
+**Command**
 
 ```bash
 curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+```
+
+**Expected output**
+No output (`--silent`).
+
+**Verification**
+✅ `ls -l /tmp/eksctl` shows the file.
+
+#### 1.1.b Install `eksctl` (only if it is missing): move it into the PATH
+
+**Explanation**
+Puts the binary in `/usr/local/bin` so the `eksctl` command works from anywhere.
+
+**Command**
+
+```bash
 sudo mv /tmp/eksctl /usr/local/bin
 ```
 
-Then check all three tools:
+**Expected output**
+No output.
+
+**Verification**
+✅ `which eksctl` prints `/usr/local/bin/eksctl`.
+
+#### 1.1.c Check `eksctl`
+
+**Explanation**
+Prints the installed `eksctl` version.
+
+**Command**
 
 ```bash
 eksctl version
-kubectl version --client
-aws --version
 ```
 
-**Expected output (versions will differ; these are the ones used in the lab):**
+**Expected output (version will differ; this is the lab version)**
 
 ```
 0.231.0
+```
+
+**Verification**
+✅ A version number is printed. `command not found` means redo 1.1.a and 1.1.b.
+
+#### 1.1.d Check `kubectl`
+
+**Explanation**
+Prints only the client version (it does not contact a cluster).
+
+**Command**
+
+```bash
+kubectl version --client
+```
+
+**Expected output**
+
+```
 Client Version: v1.37.1
 Kustomize Version: v5.8.1
+```
+
+**Verification**
+✅ A client version is printed. `kubectl` should be within ±1 minor version of the cluster; a 1.37 client against a 1.34 or 1.35 cluster works but prints a *version skew* warning on `kubectl version`. It is only a warning.
+
+#### 1.1.e Check the AWS CLI
+
+**Explanation**
+Prints the AWS CLI version. It must be new enough to know `describe-cluster-versions` and `list-insights`.
+
+**Command**
+
+```bash
+aws --version
+```
+
+**Expected output**
+
+```
 aws-cli/2.38.5 Python/3.14.8 Linux/7.0.0-1014-aws exe/x86_64.ubuntu.26
 ```
 
-> `kubectl` should be within ±1 minor version of the cluster. A `kubectl` 1.37 client against a 1.34 or 1.35 cluster works, but prints a *version skew* warning on every `kubectl version` and on many other commands. It is only a warning.
-
-If a command says `command not found`, redo that install step from your setup notes.
+**Verification**
+✅ A version is printed. If a command says `command not found`, redo that install step from your setup notes.
 
 ### 1.2 Confirm AWS credentials work
 
@@ -121,14 +188,37 @@ export NODEGROUP=my-worker-node
 export ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
 ```
 
-Confirm the variables are set (the lab kept them in `~/.bashrc`, so a new terminal needs `source ~/.bashrc` first):
+Load the variables in a new terminal (the lab kept them in `~/.bashrc`):
+
+#### 1.3.a Load the saved variables
+
+**Explanation**
+Reads `~/.bashrc` so `CLUSTER`, `REGION`, `NODEGROUP` and `ACCOUNT` exist in this terminal.
+
+**Command**
 
 ```bash
 source ~/.bashrc
+```
+
+**Expected output**
+No output.
+
+**Verification**
+✅ The next sub-step prints all four values.
+
+#### 1.3.b Check the variables
+
+**Explanation**
+Prints the four variables, one per line.
+
+**Command**
+
+```bash
 echo -e "$CLUSTER\n$REGION\n$NODEGROUP\n$ACCOUNT"
 ```
 
-**Expected output:**
+**Expected output**
 
 ```
 my-eks-cluster
@@ -137,7 +227,10 @@ my-worker-node
 123456789012
 ```
 
-Create the kubeconfig entry:
+**Verification**
+✅ Four non-empty lines. An empty line means that variable is not set; redo the `export` lines above.
+
+#### 1.3.c Create the kubeconfig entry
 
 ```bash
 aws eks update-kubeconfig --name $CLUSTER --region $REGION
@@ -322,57 +415,281 @@ configmaps.yaml  deployments.apps.yaml  pods.metrics.k8s.io.yaml  pods.yaml  rep
 
 ### Step 2.2: Back up the AWS-side cluster configuration
 
+Each command saves one piece of AWS-side configuration into a timestamped folder.
+
+#### 2.2.a Create a folder for the AWS-side configuration
+
+**Explanation**
+Stores the folder name in a variable first, so the `cd` always goes to the folder that was just created.
+
+**Command**
+
 ```bash
-mkdir -p ~/eks-backups/aws-config-$(date +%Y%m%d) && cd ~/eks-backups/aws-config-$(date +%Y%m%d)
+AWSDIR=~/eks-backups/aws-config-$(date +%Y%m%d-%H%M%S)
+mkdir -p $AWSDIR && cd $AWSDIR
+```
 
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `pwd` prints `/home/ubuntu/eks-backups/aws-config-<timestamp>`.
+
+#### 2.2.b Save `cluster.json`
+
+**Explanation**
+Saves the full AWS description of the cluster (version, endpoint, VPC, logging, status).
+
+**Command**
+
+```bash
 aws eks describe-cluster --name $CLUSTER --region $REGION > cluster.json
-aws eks list-nodegroups --cluster-name $CLUSTER --region $REGION > nodegroups-list.json
-aws eks describe-nodegroup --cluster-name $CLUSTER --nodegroup-name $NODEGROUP --region $REGION > nodegroup.json
-aws eks list-addons --cluster-name $CLUSTER --region $REGION > addons.json
-eksctl get cluster --name $CLUSTER --region $REGION -o yaml > eksctl-cluster.yaml
-eksctl get nodegroup --cluster $CLUSTER --region $REGION -o yaml > eksctl-nodegroup.yaml
-kubectl version > kubectl-version.txt
-kubectl get nodes -o wide > nodes.txt
+```
 
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `cluster.json` exists and is not empty (`ls -l` in the next sub-step).
+
+#### 2.2.c Save `nodegroups-list.json`
+
+**Explanation**
+Saves the list of node group names in the cluster.
+
+**Command**
+
+```bash
+aws eks list-nodegroups --cluster-name $CLUSTER --region $REGION > nodegroups-list.json
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `nodegroups-list.json` exists and is not empty (`ls -l` in the next sub-step).
+
+#### 2.2.d Save `nodegroup.json`
+
+**Explanation**
+Saves the node group settings (version, release version, scaling, AMI type, instance types).
+
+**Command**
+
+```bash
+aws eks describe-nodegroup --cluster-name $CLUSTER --nodegroup-name $NODEGROUP --region $REGION > nodegroup.json
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `nodegroup.json` exists and is not empty (`ls -l` in the next sub-step).
+
+#### 2.2.e Save `addons.json`
+
+**Explanation**
+Saves the names of the installed managed add-ons.
+
+**Command**
+
+```bash
+aws eks list-addons --cluster-name $CLUSTER --region $REGION > addons.json
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `addons.json` exists and is not empty (`ls -l` in the next sub-step).
+
+#### 2.2.f Save `eksctl-cluster.yaml`
+
+**Explanation**
+Saves eksctl's view of the cluster as YAML.
+
+**Command**
+
+```bash
+eksctl get cluster --name $CLUSTER --region $REGION -o yaml > eksctl-cluster.yaml
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `eksctl-cluster.yaml` exists (if it is empty that is fine; `cluster.json` and `nodegroup.json` hold the important data).
+
+#### 2.2.g Save `eksctl-nodegroup.yaml`
+
+**Explanation**
+Saves eksctl's view of the node group as YAML.
+
+**Command**
+
+```bash
+eksctl get nodegroup --cluster $CLUSTER --region $REGION -o yaml > eksctl-nodegroup.yaml
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `eksctl-nodegroup.yaml` exists (if it is empty that is fine; `cluster.json` and `nodegroup.json` hold the important data).
+
+#### 2.2.h Save `kubectl-version.txt`
+
+**Explanation**
+Records the client and server versions before the change.
+
+**Command**
+
+```bash
+kubectl version > kubectl-version.txt
+```
+
+**Expected output**
+
+```
+Warning: version difference between client (1.37) and server (1.35) exceeds the supported minor version skew of +/-1
+```
+
+**Verification**
+✅ `kubectl-version.txt` exists. The warning is printed to the terminal only when your `kubectl` is more than one minor version away; it is harmless here. If your client is within ±1 there is no output.
+
+#### 2.2.i Save `nodes.txt`
+
+**Explanation**
+Records node names, versions, IPs and OS image before the change.
+
+**Command**
+
+```bash
+kubectl get nodes -o wide > nodes.txt
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `nodes.txt` exists and is not empty (`ls -l` in the next sub-step).
+
+#### 2.2.j List the saved files
+
+**Explanation**
+Confirms all eight files were written and are not empty.
+
+**Command**
+
+```bash
 ls -l
 ```
 
-**Expected output:**
+**Expected output**
 
 ```
-addons.json  cluster.json  eksctl-cluster.yaml  eksctl-nodegroup.yaml
-kubectl-version.txt  nodegroup.json  nodegroups-list.json  nodes.txt
+total 40
+-rw-rw-r-- 1 ubuntu ubuntu  111 Oct 24 04:13 addons.json
+-rw-rw-r-- 1 ubuntu ubuntu 5650 Oct 24 04:13 cluster.json
+-rw-rw-r-- 1 ubuntu ubuntu 4383 Oct 24 04:13 eksctl-cluster.yaml
+-rw-rw-r-- 1 ubuntu ubuntu  509 Oct 24 04:13 eksctl-nodegroup.yaml
+-rw-rw-r-- 1 ubuntu ubuntu   87 Oct 24 04:13 kubectl-version.txt
+-rw-rw-r-- 1 ubuntu ubuntu 2311 Oct 24 04:13 nodegroup.json
+-rw-rw-r-- 1 ubuntu ubuntu   55 Oct 24 04:13 nodegroups-list.json
+-rw-rw-r-- 1 ubuntu ubuntu  606 Oct 24 04:13 nodes.txt
 ```
+
+**Verification**
+✅ Eight files are listed (`addons.json`, `cluster.json`, `eksctl-cluster.yaml`, `eksctl-nodegroup.yaml`, `kubectl-version.txt`, `nodegroup.json`, `nodegroups-list.json`, `nodes.txt`).
 
 (If an `eksctl get ...` file is empty, that's fine; `cluster.json` and `nodegroup.json` hold the important data.)
 
-> If `kubectl version` prints `Warning: version difference between client (1.37) and server (1.34) exceeds the supported minor version skew of +/-1`, the backup is still fine.
-> When you repeat this step before each upgrade, use a timestamped folder and a variable so the `cd` always matches the folder just created:
-> `AWSDIR=~/eks-backups/aws-config-$(date +%Y%m%d-%H%M%S); mkdir -p $AWSDIR && cd $AWSDIR`
-
 ### Step 2.3: Copy backups to S3 (so they survive if your machine dies)
+
+#### 2.3.a Set the backup bucket name
+
+**Explanation**
+Builds a unique S3 bucket name from your account ID and region and keeps it in a variable for the next commands.
+
+**Command**
 
 ```bash
 export BACKUP_BUCKET=eks-backups-$ACCOUNT-$REGION
-aws s3 mb s3://$BACKUP_BUCKET --region $REGION
-aws s3 sync ~/eks-backups s3://$BACKUP_BUCKET/$CLUSTER/
 ```
 
-**Expected output:**
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `echo $BACKUP_BUCKET` prints `eks-backups-123456789012-us-east-1`.
+
+#### 2.3.b Create the S3 bucket
+
+**Explanation**
+Creates the bucket that will hold the off-machine copy of your backups.
+
+**Command**
+
+```bash
+aws s3 mb s3://$BACKUP_BUCKET --region $REGION
+```
+
+**Expected output**
 
 ```
 make_bucket: eks-backups-123456789012-us-east-1
-upload: eks-backups/k8s-backup-2026....tar.gz to s3://eks-backups-123456789012-us-east-1/my-eks-cluster/k8s-backup-2026....tar.gz
+```
+
+**Verification**
+✅ The `make_bucket:` line is printed. On a repeat run for the same bucket you already own in the same region, the same line was printed again; that is harmless.
+
+#### 2.3.c Copy the backups to S3
+
+**Explanation**
+Uploads everything under `~/eks-backups` (archives, extracted YAML, AWS config files, the script). `sync` is incremental, so later runs upload only new files.
+
+**Command**
+
+```bash
+aws s3 sync ~/eks-backups s3://$BACKUP_BUCKET/$CLUSTER/
+```
+
+**Expected output**
+
+```
+upload: ./cluster.json to s3://eks-backups-123456789012-us-east-1/my-eks-cluster/aws-config-20261024/cluster.json
+upload: ../k8s-backup-20261024-040705.tar.gz to s3://eks-backups-123456789012-us-east-1/my-eks-cluster/k8s-backup-20261024-040705.tar.gz
 ...
 ```
 
-Verify:
+**Verification**
+✅ One `upload:` line per file and no `error` lines.
+
+#### 2.3.d List what is in S3
+
+**Explanation**
+Proves the files really arrived in the bucket.
+
+**Command**
 
 ```bash
 aws s3 ls s3://$BACKUP_BUCKET/$CLUSTER/ --recursive | head
 ```
 
-**Expected output (lab):** the first rows list `aws-config-.../*.json|yaml`, `backup-k8s.sh` and `k8s-backup-<stamp>.tar.gz`. If you also see `BrokenPipeError: [Errno 32] Broken pipe`, it is only `head` closing the pipe early; the listing is fine. `aws s3 sync` is incremental, so later runs upload only new files.
+**Expected output**
+
+```
+2026-10-24 04:16:13        111 my-eks-cluster/aws-config-20261024/addons.json
+2026-10-24 04:16:13       5650 my-eks-cluster/aws-config-20261024/cluster.json
+...
+2026-10-24 04:16:13       1241 my-eks-cluster/backup-k8s.sh
+2026-10-24 04:16:13      78435 my-eks-cluster/k8s-backup-20261024-040705.tar.gz
+```
+
+**Verification**
+✅ The `.tar.gz` archive and the `aws-config-...` files are listed.
+
+> If you also see `BrokenPipeError: [Errno 32] Broken pipe`, it is only `head` closing the pipe early; the listing is fine.
 
 ### Step 2.4: How to restore from Method A (when needed)
 
@@ -579,12 +896,12 @@ kubectl get all -n demo
 
 ## 3. TASK 2: Upgrade the cluster 1.34 → 1.35 → 1.36
 
-You run the **same 10-step cycle twice**: once with `TARGET=1.35`, then (after the cluster is healthy) once with `TARGET=1.36`. Every step below has the same four parts:
+You run the **same 10-step cycle twice**: once with `TARGET=1.35`, then (after the cluster is healthy) once with `TARGET=1.36`. **Every command has its own sub-step** (3.1.a, 3.1.b, ...) with:
 
-* **Explanation**: what the step does and why.
-* **Commands**: copy-paste.
+* **Explanation**: what that one command does and why.
+* **Command**: copy-paste, one command at a time.
 * **Expected output**: only the important lines, taken from the real 1.35 and 1.36 runs (account IDs, subnet IDs and insight IDs are replaced with placeholders).
-* **Verification**: how you know the step succeeded before moving on.
+* **Verification**: how you know that command did what it should before you continue.
 
 | Step | What | Done in 1.35 run | Done in 1.36 run |
 |------|------|:---:|:---:|
@@ -599,109 +916,392 @@ You run the **same 10-step cycle twice**: once with `TARGET=1.35`, then (after t
 | 3.9 | Verify the upgrade | ✅ | ✅ |
 | 3.10 | Extra post-upgrade health checks | (basic only) | ✅ |
 
-> Prerequisite: the variables from Step 1.3 (`CLUSTER`, `REGION`, `NODEGROUP`, `ACCOUNT`) must be set in your terminal. Check with `echo -e "$CLUSTER\n$REGION\n$NODEGROUP\n$ACCOUNT"`.
+> Prerequisite: the variables from Step 1.3 (`CLUSTER`, `REGION`, `NODEGROUP`, `ACCOUNT`) must be set in your terminal (sub-step 1.3.b checks this).
 
 ---
 
 ### Step 3.1: Set the target version and take a fresh backup
 
-**Explanation**
-The control plane upgrade **cannot be rolled back**, so you take a backup *immediately before* each hop. `TARGET` is set once here and reused by every later command, so you cannot accidentally upgrade to the wrong version.
+The control plane upgrade **cannot be rolled back**, so you take a backup *immediately before* each hop: Kubernetes objects, AWS-side configuration, and a copy in S3.
 
-**Commands**
+#### 3.1.a Set the target version
+
+**Explanation**
+`TARGET` is set once and reused by every later command, so you cannot accidentally upgrade to the wrong version. Use `1.36` for the second hop.
+
+**Command**
 
 ```bash
-export TARGET=1.35          # use 1.36 for the second hop
-echo $TARGET
+export TARGET=1.35
+```
 
-# a) Kubernetes objects (re-uses the script from Step 2.1)
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ Run `echo $TARGET`; it prints `1.35` (or `1.36` on the second hop).
+
+#### 3.1.b Back up all Kubernetes objects
+
+**Explanation**
+Runs the script from Step 2.1. It reads every object through the API server and writes YAML files plus a `.tar.gz`. Take this **immediately before** each hop because a control plane upgrade cannot be rolled back.
+
+**Command**
+
+```bash
 ~/eks-backups/backup-k8s.sh
-ls ~/eks-backups/k8s-backup-*/namespaced/demo/
-
-# b) AWS-side configuration (same files as Step 2.2, new timestamped folder)
-AWSDIR=~/eks-backups/aws-config-$(date +%Y%m%d-%H%M%S)
-mkdir -p $AWSDIR && cd $AWSDIR
-aws eks describe-cluster --name $CLUSTER --region $REGION > cluster.json
-aws eks list-nodegroups --cluster-name $CLUSTER --region $REGION > nodegroups-list.json
-aws eks describe-nodegroup --cluster-name $CLUSTER --nodegroup-name $NODEGROUP --region $REGION > nodegroup.json
-aws eks list-addons --cluster-name $CLUSTER --region $REGION > addons.json
-eksctl get cluster --name $CLUSTER --region $REGION -o yaml > eksctl-cluster.yaml
-eksctl get nodegroup --cluster $CLUSTER --region $REGION -o yaml > eksctl-nodegroup.yaml
-kubectl version > kubectl-version.txt
-kubectl get nodes -o wide > nodes.txt
-ls -l
-
-# c) Copy everything to S3
-export BACKUP_BUCKET=eks-backups-$ACCOUNT-$REGION
-aws s3 mb s3://$BACKUP_BUCKET --region $REGION
-aws s3 sync ~/eks-backups s3://$BACKUP_BUCKET/$CLUSTER/
 ```
 
-> Tip: the `AWSDIR=` variable is a small improvement over calling `$(date ...)` twice. With a `%H%M%S` timestamp, two separate `date` calls can land on different seconds and the `cd` would fail.
-
-**Expected output (important part)**
+**Expected output**
 
 ```
+>> Backing up cluster-scoped resources...
+>> Backing up namespaced resources...
+   namespace default done
+   namespace demo done
+   namespace kube-node-lease done
+   namespace kube-public done
+   namespace kube-system done
 >> DONE. Backup folder : /home/ubuntu/eks-backups/k8s-backup-20261024-044438
 >> DONE. Backup archive: /home/ubuntu/eks-backups/k8s-backup-20261024-044438.tar.gz
-configmaps.yaml  deployments.apps.yaml  pods.metrics.k8s.io.yaml  pods.yaml  replicasets.apps.yaml  serviceaccounts.yaml  services.yaml
-...
-make_bucket: eks-backups-123456789012-us-east-1
-upload: ./cluster.json to s3://eks-backups-123456789012-us-east-1/my-eks-cluster/aws-config-.../cluster.json
 ```
 
 **Verification**
+✅ All five namespaces report `done` and the `DONE. Backup archive:` line shows a new timestamped `.tar.gz`.
+
+#### 3.1.c Check the demo app is in the backup
+
+**Explanation**
+Lists the demo namespace's files in every backup folder so you can see the new one contains your app.
+
+**Command**
 
 ```bash
-ls -l ~/eks-backups/*.tar.gz
-aws s3 ls s3://$BACKUP_BUCKET/$CLUSTER/ --recursive | grep tar.gz
+ls ~/eks-backups/k8s-backup-*/namespaced/demo/
 ```
 
-✅ A new `k8s-backup-<timestamp>.tar.gz` exists locally **and** in S3, and the `demo` folder contains `deployments.apps.yaml` and `services.yaml`.
+**Expected output**
 
-Notes from the real runs:
+```
+/home/ubuntu/eks-backups/k8s-backup-20261024-053930/namespaced/demo/:
+configmaps.yaml  deployments.apps.yaml  pods.metrics.k8s.io.yaml  pods.yaml  replicasets.apps.yaml  serviceaccounts.yaml  services.yaml
+```
 
-* `kubectl version > kubectl-version.txt` prints a *client/server skew warning* when your `kubectl` is more than one minor version away from the cluster. It is harmless for the backup (see Troubleshooting).
-* Running `aws s3 ls ... | head` can print `BrokenPipeError`. This is only `head` closing the pipe early; the listing is fine.
-* In the 1.36 run `aws s3 mb` printed `make_bucket` again for the same bucket name; re-running it on a bucket you already own in the same region is harmless.
+**Verification**
+✅ The newest folder contains `deployments.apps.yaml` and `services.yaml`. (`pods.metrics.k8s.io.yaml` is there because the `metrics-server` add-on is installed.)
+
+#### 3.1.d Create a folder for the AWS-side configuration
+
+**Explanation**
+Stores the folder name in a variable first, so the `cd` always goes to the folder that was just created. (Calling `$(date ...)` twice can land on different seconds.)
+
+**Command**
+
+```bash
+AWSDIR=~/eks-backups/aws-config-$(date +%Y%m%d-%H%M%S)
+mkdir -p $AWSDIR && cd $AWSDIR
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `pwd` prints `/home/ubuntu/eks-backups/aws-config-<timestamp>`.
+
+#### 3.1.e Save `cluster.json`
+
+**Explanation**
+Saves the full AWS description of the cluster (version, endpoint, VPC, logging, status).
+
+**Command**
+
+```bash
+aws eks describe-cluster --name $CLUSTER --region $REGION > cluster.json
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `cluster.json` exists and is not empty (`ls -l` in the next sub-step).
+
+#### 3.1.f Save `nodegroups-list.json`
+
+**Explanation**
+Saves the list of node group names in the cluster.
+
+**Command**
+
+```bash
+aws eks list-nodegroups --cluster-name $CLUSTER --region $REGION > nodegroups-list.json
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `nodegroups-list.json` exists and is not empty (`ls -l` in the next sub-step).
+
+#### 3.1.g Save `nodegroup.json`
+
+**Explanation**
+Saves the node group settings (version, release version, scaling, AMI type, instance types).
+
+**Command**
+
+```bash
+aws eks describe-nodegroup --cluster-name $CLUSTER --nodegroup-name $NODEGROUP --region $REGION > nodegroup.json
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `nodegroup.json` exists and is not empty (`ls -l` in the next sub-step).
+
+#### 3.1.h Save `addons.json`
+
+**Explanation**
+Saves the names of the installed managed add-ons.
+
+**Command**
+
+```bash
+aws eks list-addons --cluster-name $CLUSTER --region $REGION > addons.json
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `addons.json` exists and is not empty (`ls -l` in the next sub-step).
+
+#### 3.1.i Save `eksctl-cluster.yaml`
+
+**Explanation**
+Saves eksctl's view of the cluster as YAML.
+
+**Command**
+
+```bash
+eksctl get cluster --name $CLUSTER --region $REGION -o yaml > eksctl-cluster.yaml
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `eksctl-cluster.yaml` exists (if it is empty that is fine; `cluster.json` and `nodegroup.json` hold the important data).
+
+#### 3.1.j Save `eksctl-nodegroup.yaml`
+
+**Explanation**
+Saves eksctl's view of the node group as YAML.
+
+**Command**
+
+```bash
+eksctl get nodegroup --cluster $CLUSTER --region $REGION -o yaml > eksctl-nodegroup.yaml
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `eksctl-nodegroup.yaml` exists (if it is empty that is fine; `cluster.json` and `nodegroup.json` hold the important data).
+
+#### 3.1.k Save `kubectl-version.txt`
+
+**Explanation**
+Records the client and server versions before the change.
+
+**Command**
+
+```bash
+kubectl version > kubectl-version.txt
+```
+
+**Expected output**
+
+```
+Warning: version difference between client (1.37) and server (1.35) exceeds the supported minor version skew of +/-1
+```
+
+**Verification**
+✅ `kubectl-version.txt` exists. The warning is printed to the terminal only when your `kubectl` is more than one minor version away; it is harmless here. If your client is within ±1 there is no output.
+
+#### 3.1.l Save `nodes.txt`
+
+**Explanation**
+Records node names, versions, IPs and OS image before the change.
+
+**Command**
+
+```bash
+kubectl get nodes -o wide > nodes.txt
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `nodes.txt` exists and is not empty (`ls -l` in the next sub-step).
+
+#### 3.1.m List the saved files
+
+**Explanation**
+Confirms all eight files were written and are not empty.
+
+**Command**
+
+```bash
+ls -l
+```
+
+**Expected output**
+
+```
+total 40
+-rw-rw-r-- 1 ubuntu ubuntu  111 Oct 24 04:13 addons.json
+-rw-rw-r-- 1 ubuntu ubuntu 5650 Oct 24 04:13 cluster.json
+-rw-rw-r-- 1 ubuntu ubuntu 4383 Oct 24 04:13 eksctl-cluster.yaml
+-rw-rw-r-- 1 ubuntu ubuntu  509 Oct 24 04:13 eksctl-nodegroup.yaml
+-rw-rw-r-- 1 ubuntu ubuntu   87 Oct 24 04:13 kubectl-version.txt
+-rw-rw-r-- 1 ubuntu ubuntu 2311 Oct 24 04:13 nodegroup.json
+-rw-rw-r-- 1 ubuntu ubuntu   55 Oct 24 04:13 nodegroups-list.json
+-rw-rw-r-- 1 ubuntu ubuntu  606 Oct 24 04:13 nodes.txt
+```
+
+**Verification**
+✅ Eight files are listed (`addons.json`, `cluster.json`, `eksctl-cluster.yaml`, `eksctl-nodegroup.yaml`, `kubectl-version.txt`, `nodegroup.json`, `nodegroups-list.json`, `nodes.txt`).
+
+#### 3.1.n Set the backup bucket name
+
+**Explanation**
+Builds a unique S3 bucket name from your account ID and region and keeps it in a variable for the next commands.
+
+**Command**
+
+```bash
+export BACKUP_BUCKET=eks-backups-$ACCOUNT-$REGION
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `echo $BACKUP_BUCKET` prints `eks-backups-123456789012-us-east-1`.
+
+#### 3.1.o Create the S3 bucket
+
+**Explanation**
+Creates the bucket that will hold the off-machine copy of your backups.
+
+**Command**
+
+```bash
+aws s3 mb s3://$BACKUP_BUCKET --region $REGION
+```
+
+**Expected output**
+
+```
+make_bucket: eks-backups-123456789012-us-east-1
+```
+
+**Verification**
+✅ The `make_bucket:` line is printed. On a repeat run for the same bucket you already own in the same region, the same line was printed again; that is harmless.
+
+#### 3.1.p Copy the backups to S3
+
+**Explanation**
+Uploads everything under `~/eks-backups` (archives, extracted YAML, AWS config files, the script). `sync` is incremental, so later runs upload only new files.
+
+**Command**
+
+```bash
+aws s3 sync ~/eks-backups s3://$BACKUP_BUCKET/$CLUSTER/
+```
+
+**Expected output**
+
+```
+upload: ./cluster.json to s3://eks-backups-123456789012-us-east-1/my-eks-cluster/aws-config-20261024/cluster.json
+upload: ../k8s-backup-20261024-040705.tar.gz to s3://eks-backups-123456789012-us-east-1/my-eks-cluster/k8s-backup-20261024-040705.tar.gz
+...
+```
+
+**Verification**
+✅ One `upload:` line per file and no `error` lines.
+
+#### 3.1.q List what is in S3
+
+**Explanation**
+Proves the files really arrived in the bucket.
+
+**Command**
+
+```bash
+aws s3 ls s3://$BACKUP_BUCKET/$CLUSTER/ --recursive | head
+```
+
+**Expected output**
+
+```
+2026-10-24 04:16:13        111 my-eks-cluster/aws-config-20261024/addons.json
+2026-10-24 04:16:13       5650 my-eks-cluster/aws-config-20261024/cluster.json
+...
+2026-10-24 04:16:13       1241 my-eks-cluster/backup-k8s.sh
+2026-10-24 04:16:13      78435 my-eks-cluster/k8s-backup-20261024-040705.tar.gz
+```
+
+**Verification**
+✅ The `.tar.gz` archive and the `aws-config-...` files are listed.
+
+> If you also see `BrokenPipeError: [Errno 32] Broken pipe`, it is only `head` closing the pipe early; the listing is fine.
 
 ---
 
 ### Step 3.2: Confirm the cluster state and the available versions
 
-**Explanation**
 Before changing anything, prove that the cluster is `ACTIVE`, is on the version you think it is, that `kubectl` points at the right cluster, and that AWS offers the target version.
 
-**Commands**
+#### 3.2.a Check cluster status and current version
+
+**Explanation**
+Reads the cluster's `status` and `version` from AWS (not from `kubectl`).
+
+**Command**
 
 ```bash
 aws eks describe-cluster --name $CLUSTER --region $REGION \
   --query "cluster.{Version:version,Status:status}" --output table
+```
 
+**Expected output**
+
+```
+1.35 run (cluster on 1.34):          1.36 run (cluster on 1.35):
+|  Status  |  Version  |                  |  Status  |  Version  |
+|  ACTIVE  |  1.34     |                  |  ACTIVE  |  1.35     |
+```
+
+**Verification**
+✅ `Status` is `ACTIVE` and `Version` is the version you are upgrading **from**. (In the 1.35 run this was checked with `--query "cluster.version" --output text`, which printed `1.34`.)
+
+#### 3.2.b List the Kubernetes versions AWS supports
+
+**Explanation**
+Confirms the target version is offered and shows its support type.
+
+**Command**
+
+```bash
 aws eks describe-cluster-versions --region $REGION \
   --query "clusterVersions[].{Version:clusterVersion,Status:status}" --output table
-
-aws eks update-kubeconfig --name $CLUSTER --region $REGION
-kubectl get nodes
 ```
 
-**Expected output (important part)**
-
-1.35 run (cluster still on 1.34). The log checked this with `--query "cluster.version" --output text` and got `1.34`; the table form shows:
-
-```
-|  Status  |  Version  |
-|  ACTIVE  |  1.34     |
-```
-
-1.36 run (cluster now on 1.35):
-
-```
-|  Status  |  Version  |
-|  ACTIVE  |  1.35     |
-```
-
-Available versions (same in both runs):
+**Expected output**
 
 ```
 |  STANDARD_SUPPORT |  1.37  |
@@ -711,66 +1311,100 @@ Available versions (same in both runs):
 |  EXTENDED_SUPPORT |  1.33  |   (and 1.32, 1.31)
 ```
 
+**Verification**
+✅ `TARGET` (1.35 or 1.36) is in the list with `STANDARD_SUPPORT`.
+
+#### 3.2.c Point `kubectl` at the cluster
+
+**Explanation**
+Writes (or refreshes) the kubeconfig entry so `kubectl` talks to this cluster.
+
+**Command**
+
+```bash
+aws eks update-kubeconfig --name $CLUSTER --region $REGION
+```
+
+**Expected output**
+
 ```
 Updated context arn:aws:eks:us-east-1:123456789012:cluster/my-eks-cluster in /home/ubuntu/.kube/config
-
-NAME                             STATUS   ROLES    AGE   VERSION
-ip-192-168-5-11.ec2.internal     Ready    <none>   30m   v1.35.9-eks-117f323      <- 1.36 run
 ```
 
 **Verification**
-✅ `Status` is `ACTIVE`, `Version` is the version you are upgrading **from**, `TARGET` appears in the version list with `STANDARD_SUPPORT`, and every node is `Ready` at the old version.
+✅ The context line names `my-eks-cluster`. (The very first time it says `Added new context`.)
+
+#### 3.2.d Check the nodes
+
+**Explanation**
+Shows that every node is `Ready` and which version it runs before the upgrade.
+
+**Command**
+
+```bash
+kubectl get nodes
+```
+
+**Expected output**
+
+```
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-5-11.ec2.internal     Ready    <none>   30m   v1.35.9-eks-117f323      <- 1.36 run
+ip-192-168-51-209.ec2.internal   Ready    <none>   30m   v1.35.9-eks-117f323
+```
+
+**Verification**
+✅ Both nodes are `Ready` at the old version. If one is not `Ready`, stop and fix it first.
 
 ---
 
 ### Step 3.3: EKS Upgrade Insights (what could break)
 
-**Explanation**
 Upgrade Insights are AWS's own pre-flight checks: deprecated APIs in use, kubelet and kube-proxy version skew, add-on compatibility, cluster health. Anything other than `PASSING` must be understood before you continue.
 
-**Commands**
+#### 3.3.a List the insights for the target version
+
+**Explanation**
+Asks AWS for the checks that apply to `TARGET`, showing only name and status.
+
+**Command**
 
 ```bash
-# Insights for the target version
 aws eks list-insights --cluster-name $CLUSTER --region $REGION \
   --filter kubernetesVersions=$TARGET \
   --query "insights[].{Name:name,Status:insightStatus.status}" --output table
-
-# If the filtered list is empty, list everything with its target version
-aws eks list-insights --cluster-name $CLUSTER --region $REGION \
-  --query "insights[].{Name:name,Target:kubernetesVersion,Status:insightStatus.status}" --output table
-
-# Read the details of any insight that is not PASSING
-aws eks describe-insight --cluster-name $CLUSTER --region $REGION --id <INSIGHT_ID>
-
-# Look ahead: deprecated APIs scheduled for removal in the NEXT version
-aws eks list-insights --cluster-name $CLUSTER --region $REGION \
-  --filter kubernetesVersions=1.37 --output table
 ```
 
-**Expected output (important part)**
+**Expected output**
 
+```
 1.35 run:
-
-```
 |  kube-proxy version skew           |  PASSING |
 |  Cluster health issues             |  PASSING |
 |  Kubelet version skew              |  PASSING |
 |  EKS add-on version compatibility  |  UNKNOWN |
 |  Amazon Linux 2 compatibility      |  PASSING |
+
+1.36 run:
+{ "insights": [] }
 ```
 
-`describe-insight` for the `UNKNOWN` row:
+**Verification**
+✅ Every row is `PASSING`. A row that is not (here `UNKNOWN`) is investigated in 3.3.c to 3.3.e. An empty list (1.36 run) means nothing is stored for that filter; use 3.3.b instead.
 
-```
-"status": "UNKNOWN",
-"reason": "Unable to determine version compatibility of EKS add-ons."
-...
-"reason": "Unable to determine addon compatibility: addon 'coredns' is in 'DEGRADED' state."     <- coredns resource
-"reason": "All installed EKS add-on versions are compatible with next Kubernetes version."       <- kube-proxy, vpc-cni
+#### 3.3.b List all insights with their target version
+
+**Explanation**
+Used when the filtered list is empty. Shows every insight and which Kubernetes version it is about.
+
+**Command**
+
+```bash
+aws eks list-insights --cluster-name $CLUSTER --region $REGION \
+  --query "insights[].{Name:name,Target:kubernetesVersion,Status:insightStatus.status}" --output table
 ```
 
-1.36 run: `--filter kubernetesVersions=1.36` returned an empty list (`"insights": []`), so the unfiltered command was used:
+**Expected output**
 
 ```
 |  kube-proxy version skew                      |  PASSING |  1.35  |
@@ -782,56 +1416,255 @@ aws eks list-insights --cluster-name $CLUSTER --region $REGION \
 |  Amazon Linux 2 compatibility                 |  PASSING |  1.35  |
 ```
 
-The look-ahead check showed `"reason": "No deprecated API usage detected within the last 30 days."` and `"status": "PASSING"`.
+**Verification**
+✅ Same picture as 3.3.a: everything `PASSING` except `EKS add-on version compatibility`.
 
-**Verification: investigate the `UNKNOWN`**
-The insight said CoreDNS was `DEGRADED`, so check CoreDNS directly:
+#### 3.3.c Read the details of the `UNKNOWN` insight
+
+**Explanation**
+Opens the full record of one insight. Copy the `id` for it from `aws eks list-insights` (without `--query`) and put it in place of `<INSIGHT_ID>`.
+
+**Command**
+
+```bash
+aws eks describe-insight --cluster-name $CLUSTER --region $REGION --id <INSIGHT_ID>
+```
+
+**Expected output**
+
+```
+"status": "UNKNOWN",
+"reason": "Unable to determine version compatibility of EKS add-ons."
+...
+"reason": "Unable to determine addon compatibility: addon 'coredns' is in 'DEGRADED' state."   <- coredns resource
+"reason": "All installed EKS add-on versions are compatible with next Kubernetes version."     <- kube-proxy, vpc-cni
+```
+
+**Verification**
+✅ You now know *why* it is `UNKNOWN`: AWS saw CoreDNS as `DEGRADED`. `kube-proxy` and `vpc-cni` were reported compatible. Check CoreDNS yourself in the next two sub-steps.
+
+#### 3.3.d Check CoreDNS health in AWS
+
+**Explanation**
+Reads the CoreDNS add-on record to see whether it really has health issues.
+
+**Command**
 
 ```bash
 aws eks describe-addon --cluster-name $CLUSTER --addon-name coredns --region $REGION
-kubectl -n kube-system get pods -l k8s-app=kube-dns -o wide
 ```
+
+**Expected output**
 
 ```
 "status": "ACTIVE",
 "addonVersion": "v1.12.4-eksbuild.58",
 "health": { "issues": [] },
-...
-coredns-7879986bf8-7sqmx   1/1   Running   0   31m
-coredns-7879986bf8-j2kn4   1/1   Running   0   31m
 ```
 
-✅ In both runs CoreDNS was `ACTIVE` with no health issues and both pods were `Running`, while `kube-proxy` and `vpc-cni` were reported compatible. The insight's `lastRefreshTime` (`03:59:19`) is right around the time cluster creation finished (`03:59`), so the `UNKNOWN` was most likely a stale reading from when CoreDNS had no nodes yet. The upgrade then went ahead and succeeded. If CoreDNS had really been unhealthy, fix that first.
+**Verification**
+✅ `status` is `ACTIVE` and `issues` is empty.
+
+#### 3.3.e Check the CoreDNS pods
+
+**Explanation**
+Confirms the CoreDNS pods are running and where they are scheduled.
+
+**Command**
+
+```bash
+kubectl -n kube-system get pods -l k8s-app=kube-dns -o wide
+```
+
+**Expected output**
+
+```
+NAME                       READY   STATUS    RESTARTS   AGE   NODE
+coredns-7879986bf8-7sqmx   1/1     Running   0          31m   ip-192-168-21-69.ec2.internal
+coredns-7879986bf8-j2kn4   1/1     Running   0          31m   ip-192-168-21-69.ec2.internal
+```
+
+**Verification**
+✅ Both pods are `1/1 Running`. Together with 3.3.d, CoreDNS is healthy, so the `UNKNOWN` was most likely a stale reading (the insight's `lastRefreshTime` `03:59:19` is right when cluster creation finished). The upgrade went ahead and succeeded. If CoreDNS had really been unhealthy, fix that first.
+
+#### 3.3.f Look ahead: deprecated APIs in the next version
+
+**Explanation**
+Checks whether your cluster uses APIs that will be removed in the version *after* your target, so the next hop holds no surprises.
+
+**Command**
+
+```bash
+aws eks list-insights --cluster-name $CLUSTER --region $REGION \
+  --filter kubernetesVersions=1.37 --output table
+```
+
+**Expected output**
+
+```
+"name": "Deprecated APIs removed in Kubernetes v1.37"
+"reason": "No deprecated API usage detected within the last 30 days."
+"status": "PASSING"
+```
+
+**Verification**
+✅ `PASSING` with no deprecated API usage.
 
 ---
 
 ### Step 3.4: Add-on inventory and compatibility check
 
-**Explanation**
-Add-ons (`kube-proxy`, `vpc-cni`, `coredns`, `metrics-server`) are versioned separately from Kubernetes. Before upgrading you need to know (1) what is installed now, (2) which versions are compatible with `TARGET`, and (3) which one AWS marks as **Default**. You will use the Default version in Step 3.7.
+Add-ons (`kube-proxy`, `vpc-cni`, `coredns`, `metrics-server`) are versioned separately from Kubernetes. Before upgrading you need to know what is installed now, which versions are compatible with `TARGET`, and which one AWS marks as **Default**. You use the Default version in Step 3.7.
 
-**Commands**
+#### 3.4.a Show the installed add-ons (eksctl view)
+
+**Explanation**
+Lists the managed add-ons, their versions, health, and which newer builds are available.
+
+**Command**
 
 ```bash
-# What is installed (managed add-ons)
 eksctl get addon --cluster $CLUSTER --region $REGION
-aws eks list-addons --cluster-name $CLUSTER --region $REGION
+```
 
-# Installed version of each add-on
+**Expected output**
+
+```
+NAME            VERSION                 STATUS  ISSUES  ...
+coredns         v1.12.4-eksbuild.58     ACTIVE  0
+kube-proxy      v1.34.6-eksbuild.52     ACTIVE  0
+metrics-server  v0.9.0-eksbuild.14      ACTIVE  0
+vpc-cni         v1.22.4-eksbuild.3      ACTIVE  0
+```
+
+**Verification**
+✅ Four add-ons, all `ACTIVE`, `ISSUES 0`. If the table is empty your add-ons are self-managed (see 3.7.e to 3.7.g). The `UPDATE AVAILABLE` column lists newer builds you can pick.
+
+#### 3.4.b Show the installed add-ons (AWS view)
+
+**Explanation**
+Gets just the add-on names directly from the EKS API.
+
+**Command**
+
+```bash
+aws eks list-addons --cluster-name $CLUSTER --region $REGION
+```
+
+**Expected output**
+
+```
+{
+    "addons": [ "coredns", "kube-proxy", "metrics-server", "vpc-cni" ]
+}
+```
+
+**Verification**
+✅ The same four names as in 3.4.a.
+
+#### 3.4.c Print each add-on's installed version
+
+**Explanation**
+Loops over the four add-ons and prints the version of each. (One `for` loop, one result per add-on.)
+
+**Command**
+
+```bash
 for ADDON in kube-proxy vpc-cni coredns metrics-server; do
   echo -n "$ADDON: "
   aws eks describe-addon --cluster-name $CLUSTER --addon-name $ADDON --region $REGION \
     --query "addon.addonVersion" --output text
 done
+```
 
-# What is actually running (container images)
+**Expected output**
+
+```
+(1.36 run)
+kube-proxy: v1.35.3-eksbuild.52
+vpc-cni: v1.22.4-eksbuild.3
+coredns: v1.13.2-eksbuild.51
+metrics-server: v0.9.0-eksbuild.14
+```
+
+**Verification**
+✅ Four versions printed. Write them down; you compare them with the Default versions in 3.4.g.
+
+#### 3.4.d Show the add-on pods in detail
+
+**Explanation**
+Shows the pods that make up the add-ons, with their nodes and ages, before anything changes.
+
+**Command**
+
+```bash
 kubectl get pods -n kube-system -o wide
+```
+
+**Expected output**
+
+```
+aws-node-rmql9                    2/2   Running   0   38m   ip-192-168-21-69.ec2.internal
+aws-node-s7wxr                    2/2   Running   0   38m   ip-192-168-44-47.ec2.internal
+coredns-7879986bf8-7sqmx          1/1   Running   0   41m
+kube-proxy-jm6tg                  1/1   Running   0   38m
+metrics-server-68c65f79d8-8lcjw   1/1   Running   0   36m
+```
+
+**Verification**
+✅ Every pod is `Running` with full `READY`.
+
+#### 3.4.e Show the images of `aws-node` and `kube-proxy`
+
+**Explanation**
+Reads the container image tag actually used by the two DaemonSets (the real running version).
+
+**Command**
+
+```bash
 kubectl get ds aws-node kube-proxy -n kube-system \
   -o jsonpath='{range .items[*]}{.metadata.name}{"  "}{.spec.template.spec.containers[0].image}{"\n"}{end}'
+```
+
+**Expected output**
+
+```
+aws-node  602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon-k8s-cni:v1.22.4-eksbuild.3
+kube-proxy  602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/kube-proxy:v1.34.6-eksbuild.52
+```
+
+**Verification**
+✅ The image tags match the versions from 3.4.a.
+
+#### 3.4.f Show the image of CoreDNS
+
+**Explanation**
+Same check for the CoreDNS Deployment.
+
+**Command**
+
+```bash
 kubectl get deploy coredns -n kube-system \
   -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+```
 
-# Compatible versions for the target (look for Default = True)
+**Expected output**
+
+```
+602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.12.4-eksbuild.58
+```
+
+**Verification**
+✅ The tag matches the CoreDNS version from 3.4.a.
+
+#### 3.4.g Find the Default version of each add-on for the target
+
+**Explanation**
+Lists the versions compatible with `TARGET` and marks the AWS Default with `True`. `| head -15` keeps the top of each long list.
+
+**Command**
+
+```bash
 for ADDON in kube-proxy vpc-cni coredns metrics-server; do
   echo "=== $ADDON ==="
   aws eks describe-addon-versions --addon-name $ADDON --kubernetes-version $TARGET --region $REGION \
@@ -840,272 +1673,636 @@ for ADDON in kube-proxy vpc-cni coredns metrics-server; do
 done
 ```
 
-> The lists are long (dozens of builds). `| head -15` keeps the top; if you do not see a `True` row, remove `head`. In the 1.35 run the `True` row was *not* the first row for `kube-proxy`.
-> The 1.35 run also saved the full JSON for CoreDNS to a file with `aws eks describe-addon-versions --addon-name coredns --kubernetes-version 1.35 --region $REGION > coredns-versions.json`, which is handy for searching later.
+**Expected output**
 
-For the 1.36 hop an extra check proved that the version you already run is still *supported on the new control plane* (so nothing breaks in the gap between Step 3.6 and Step 3.7):
+```
+Default versions found:
+                 for 1.35                for 1.36
+kube-proxy       v1.35.3-eksbuild.52     v1.36.0-eksbuild.48
+vpc-cni          v1.22.4-eksbuild.3      v1.22.4-eksbuild.3
+coredns          v1.13.2-eksbuild.51     v1.14.7-eksbuild.11
+metrics-server   v0.9.0-eksbuild.14      v0.9.0-eksbuild.14
+```
+
+**Verification**
+✅ You have one `True` (Default) version per add-on. If you do not see a `True` row in the first 15 lines (in the 1.35 run it was the *second* row for `kube-proxy`), remove `| head -15`. An add-on whose installed version already equals the Default (`vpc-cni`, `metrics-server`) needs no change.
+
+#### 3.4.h Save the full CoreDNS version list to a file (optional)
+
+**Explanation**
+The 1.35 run stored the complete JSON so it can be searched later (it was written to a file called `output`; a clearer name is used here).
+
+**Command**
+
+```bash
+aws eks describe-addon-versions --addon-name coredns --kubernetes-version $TARGET --region $REGION \
+  > coredns-versions-$TARGET.json
+```
+
+**Expected output**
+No output (the command succeeds silently).
+
+**Verification**
+✅ `ls -l coredns-versions-$TARGET.json` shows a non-empty file.
+
+#### 3.4.i Check the current CoreDNS build is still supported on the new control plane (1.36 hop)
+
+**Explanation**
+Proves the CoreDNS build you run now is valid on the *new* control plane, so nothing breaks in the gap between the control plane upgrade (3.6) and the add-on upgrade (3.7). `grep -n` prints the line number if found.
+
+**Command**
 
 ```bash
 aws eks describe-addon-versions --addon-name coredns --kubernetes-version 1.36 --region $REGION \
   --query "addons[0].addonVersions[].addonVersion" --output text | tr '\t' '\n' | grep -n "v1.13.2-eksbuild.51"
+```
+
+**Expected output**
+
+```
+14:v1.13.2-eksbuild.51
+```
+
+**Verification**
+✅ A line is printed. No output would mean that build is **not** supported on the target.
+
+#### 3.4.j Check the current kube-proxy build is still supported on the new control plane (1.36 hop)
+
+**Explanation**
+The same check for `kube-proxy`.
+
+**Command**
+
+```bash
 aws eks describe-addon-versions --addon-name kube-proxy --kubernetes-version 1.36 --region $REGION \
   --query "addons[0].addonVersions[].addonVersion" --output text | tr '\t' '\n' | grep -n "v1.35.3-eksbuild.52"
 ```
 
-**Expected output (important part)**
-
-Installed before the 1.35 hop (cluster on 1.34):
+**Expected output**
 
 ```
-coredns         v1.12.4-eksbuild.58   ACTIVE  0
-kube-proxy      v1.34.6-eksbuild.52   ACTIVE  0
-metrics-server  v0.9.0-eksbuild.14    ACTIVE  0
-vpc-cni         v1.22.4-eksbuild.3    ACTIVE  0
-
-aws-node    .../amazon-k8s-cni:v1.22.4-eksbuild.3
-kube-proxy  .../eks/kube-proxy:v1.34.6-eksbuild.52
-.../eks/coredns:v1.12.4-eksbuild.58
-```
-
-**Default** versions AWS returned:
-
-| Add-on | Default for 1.35 | Default for 1.36 |
-|--------|------------------|------------------|
-| kube-proxy | `v1.35.3-eksbuild.52` | `v1.36.0-eksbuild.48` |
-| vpc-cni | `v1.22.4-eksbuild.3` | `v1.22.4-eksbuild.3` |
-| coredns | `v1.13.2-eksbuild.51` | `v1.14.7-eksbuild.11` |
-| metrics-server | `v0.9.0-eksbuild.14` | `v0.9.0-eksbuild.14` |
-
-1.36 run, "is my current version still supported?" check:
-
-```
-14:v1.13.2-eksbuild.51
 16:v1.35.3-eksbuild.52
 ```
 
 **Verification**
-✅ You have a Default version written down for every add-on. ✅ Any add-on whose installed version equals the Default (here `vpc-cni` and `metrics-server`) needs no change. ✅ The `grep -n` lines print a match, meaning the old add-on build is supported on the new control plane.
+✅ A line is printed.
 
 ---
 
 ### Step 3.5: Capacity and health pre-checks
 
-**Explanation**
-During a node group upgrade EKS launches **new nodes before removing the old ones**. In both real runs all **4 nodes existed at the same time** (2 old + 2 new), so you need free IP addresses in the subnets and vCPU quota for 4 `t2.medium` (2 vCPU each = 8 vCPU). This step proves both, and confirms no pod is already unhealthy. It was run for 1.35; the 1.36 hop re-used the same results.
+During a node group upgrade EKS launches **new nodes before removing the old ones**. In both real runs all **4 nodes existed at the same time** (2 old + 2 new), so you need free IP addresses in the subnets and vCPU quota for 4 `t2.medium` (2 vCPU each = 8 vCPU). It was run for 1.35 and not repeated for 1.36.
 
-**Commands**
+#### 3.5.a List the cluster's subnet IDs
+
+**Explanation**
+Finds the subnets the cluster uses so you can look at their free IP addresses next.
+
+**Command**
 
 ```bash
-# a) Free IPs in the cluster subnets
 aws eks describe-cluster --name $CLUSTER --region $REGION \
   --query "cluster.resourcesVpcConfig.subnetIds" --output text
+```
 
+**Expected output**
+
+```
+subnet-aaaaaaaa    subnet-bbbbbbbb    subnet-cccccccc    subnet-dddddddd
+```
+
+**Verification**
+✅ Four subnet IDs are printed. Copy them for the next sub-step.
+
+#### 3.5.b Check free IP addresses in those subnets
+
+**Explanation**
+Every node and pod takes an IP. This shows how many are left in each subnet. Replace `<SUBNET_1>` ... `<SUBNET_4>` with the IDs from 3.5.a.
+
+**Command**
+
+```bash
 aws ec2 describe-subnets \
   --subnet-ids <SUBNET_1> <SUBNET_2> <SUBNET_3> <SUBNET_4> \
   --query "Subnets[].{Subnet:SubnetId,AZ:AvailabilityZone,AvailableIPs:AvailableIpAddressCount}" \
   --output table
-
-# b) Node group size limits
-aws eks describe-nodegroup --cluster-name $CLUSTER --nodegroup-name $NODEGROUP --region $REGION \
-  --query "nodegroup.scalingConfig" --output table
-
-# c) EC2 vCPU quota (Running On-Demand Standard instances)
-aws service-quotas get-service-quota --service-code ec2 --quota-code L-1216C47A \
-  --region $REGION --query "Quota.Value" --output text
-
-# d) No unhealthy pods
-kubectl get pods -A | grep -v -E "Running|Completed"
 ```
 
-**Expected output (important part)**
+**Expected output**
 
 ```
-|  us-east-1f|  8174  |  subnet-xxxxxxxx  |
-|  us-east-1d|  8175  |  subnet-xxxxxxxx  |
-...
-|  desiredSize |  maxSize  |  minSize  |
-|  2           |  2        |  2        |
-16.0
-NAMESPACE     NAME      READY   STATUS    RESTARTS   AGE        <- header only = no unhealthy pods
+|  us-east-1f|  8174  |  subnet-aaaaaaaa  |
+|  us-east-1d|  8175  |  subnet-bbbbbbbb  |
+|  us-east-1d|  8186  |  subnet-cccccccc  |
+|  us-east-1f|  8186  |  subnet-dddddddd  |
 ```
 
 **Verification**
-✅ Each subnet has thousands of free IPs. ✅ Quota `16.0` vCPU ≥ 8 vCPU needed at the peak. ✅ The last command prints **only the header line**.
+✅ Each subnet has thousands of free IPs (you need only a handful).
 
-> Note: the node group has `maxSize 2`, but the rolling upgrade still adds surge nodes beyond that during the update; it is not blocked by `maxSize`.
+#### 3.5.c Check the node group size limits
+
+**Explanation**
+Shows the node group's minimum, desired and maximum sizes.
+
+**Command**
+
+```bash
+aws eks describe-nodegroup --cluster-name $CLUSTER --nodegroup-name $NODEGROUP --region $REGION \
+  --query "nodegroup.scalingConfig" --output table
+```
+
+**Expected output**
+
+```
+|  desiredSize |  maxSize  |  minSize  |
+|  2           |  2        |  2        |
+```
+
+**Verification**
+✅ `2 / 2 / 2`. The rolling upgrade still adds surge nodes beyond `maxSize` (4 nodes were seen at the peak), so `maxSize 2` does not block it.
+
+#### 3.5.d Check the EC2 vCPU quota
+
+**Explanation**
+Reads your account limit for Running On-Demand Standard instances (counted in vCPUs). The upgrade peak needs 8 vCPU.
+
+**Command**
+
+```bash
+aws service-quotas get-service-quota --service-code ec2 --quota-code L-1216C47A \
+  --region $REGION --query "Quota.Value" --output text
+```
+
+**Expected output**
+
+```
+16.0
+```
+
+**Verification**
+✅ The value (`16.0`) is at least 8.
+
+#### 3.5.e Check that no pod is unhealthy
+
+**Explanation**
+Lists every pod that is *not* `Running` or `Completed`. Anything shown here must be fixed before upgrading.
+
+**Command**
+
+```bash
+kubectl get pods -A | grep -v -E "Running|Completed"
+```
+
+**Expected output**
+
+```
+NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE
+```
+
+**Verification**
+✅ Only the header line is printed (no unhealthy pods).
 
 ---
 
 ### Step 3.6: Upgrade the control plane (API server + etcd, run by AWS)
 
-**Explanation**
-This upgrades the AWS-managed control plane one minor version. Nodes and add-ons are **not** touched yet, which is supported for a while.
+This upgrades the AWS-managed control plane by one minor version. Nodes and add-ons are **not** touched yet, which is supported for a while. Do not press `Ctrl+C`; if your terminal disconnects the upgrade continues in AWS.
 
-**Commands**
+#### 3.6.a Start the control plane upgrade
+
+**Explanation**
+Upgrades the control plane to `TARGET`. Without `--approve` eksctl only shows a plan (a safe dry run).
+
+**Command**
 
 ```bash
 eksctl upgrade cluster --name $CLUSTER --region $REGION --version $TARGET --approve
-
-# While it runs (from a second terminal), or if your terminal disconnects:
-aws eks describe-cluster --name $CLUSTER --region $REGION \
-  --query "cluster.{Version:version,Status:status}" --output text
 ```
 
-**Expected output (important part)**
-
-1.35 run (about 7.5 minutes):
+**Expected output**
 
 ```
+1.35 run (about 7.5 min):
 04:53:46 [ℹ]  will upgrade cluster "my-eks-cluster" control plane from current version "1.34" to "1.35"
 05:01:14 [✔]  cluster "my-eks-cluster" control plane has been upgraded to version "1.35"
 05:01:14 [ℹ]  you will need to follow the upgrade procedure for all of nodegroups and add-ons
 05:01:14 [ℹ]  all nodegroups have up-to-date cloudformation templates
-```
 
-1.36 run (about 7.5 minutes):
-
-```
-05:50:47 [ℹ]  will upgrade cluster "my-eks-cluster" control plane from current version "1.35" to "1.36"
+1.36 run (about 7.5 min):
+05:50:47 [ℹ]  will upgrade ... from current version "1.35" to "1.36"
 05:58:18 [✔]  cluster "my-eks-cluster" control plane has been upgraded to version "1.36"
 ```
 
 **Verification**
+✅ The `[✔] ... has been upgraded to version` line appears.
+
+#### 3.6.b Check the status and version (also usable while it runs)
+
+**Explanation**
+From a second terminal this shows `UPDATING` while the upgrade is running and `ACTIVE` when it is done.
+
+**Command**
 
 ```bash
 aws eks describe-cluster --name $CLUSTER --region $REGION \
   --query "cluster.{Version:version,Status:status}" --output text
+```
+
+**Expected output**
+
+```
+ACTIVE  1.35        (1.36 run: ACTIVE  1.36)
+```
+
+**Verification**
+✅ `ACTIVE` and the new version.
+
+#### 3.6.c Check the API server version
+
+**Explanation**
+Asks the API server itself which version it runs (the `Server Version` line).
+
+**Command**
+
+```bash
 kubectl version
+```
+
+**Expected output**
+
+```
+Client Version: v1.37.1
+Kustomize Version: v5.8.1
+Server Version: v1.35.8-eks-b9510e3        (1.36 run: v1.36.4-eks-b9510e3)
+Warning: version difference between client (1.37) and server (1.35) exceeds the supported minor version skew of +/-1
+```
+
+**Verification**
+✅ `Server Version` is the new version. The skew warning was printed in the 1.35 run and disappeared in the 1.36 run (client 1.37 is within ±1 of 1.36); it is harmless.
+
+#### 3.6.d Check that the nodes are unchanged
+
+**Explanation**
+Confirms nodes are still `Ready` and still on the **old** version, which is expected until Step 3.8.
+
+**Command**
+
+```bash
 kubectl get nodes
+```
+
+**Expected output**
+
+```
+NAME                            STATUS   ROLES    AGE   VERSION
+ip-192-168-21-69.ec2.internal   Ready    <none>   64m   v1.34.12-eks-117f323
+ip-192-168-44-47.ec2.internal   Ready    <none>   64m   v1.34.12-eks-117f323
+```
+
+**Verification**
+✅ Both nodes `Ready` at the old version.
+
+#### 3.6.e Check that no pod became unhealthy
+
+**Explanation**
+The same filter as 3.5.e, to make sure the control plane upgrade did not disturb your workloads.
+
+**Command**
+
+```bash
 kubectl get pods -A | grep -v -E "Running|Completed"
 ```
 
+**Expected output**
+
 ```
-ACTIVE  1.35                                       (1.36 run: ACTIVE  1.36)
-Server Version: v1.35.8-eks-b9510e3                (1.36 run: v1.36.4-eks-b9510e3)
-ip-192-168-21-69...   Ready   v1.34.12-eks-117f323  <- nodes are still on the OLD version, as expected
+NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE
 ```
 
-✅ Status `ACTIVE`, server version is the new one, nodes unchanged and `Ready`, no unhealthy pods.
-(In the 1.35 run the output also showed `Warning: version difference between client (1.37) and server (1.35) exceeds the supported minor version skew of +/-1`. In the 1.36 run the warning was gone because `kubectl` 1.37 is within ±1 of 1.36.)
+**Verification**
+✅ Only the header line is printed.
 
 ---
 
 ### Step 3.7: Upgrade the add-ons
 
+Update each managed add-on to the **Default** version found in 3.4.g. `--force` resolves field conflicts if someone edited the add-on by hand. Which sub-steps were run in each hop:
+
+| Hop | Sub-steps run | Why |
+|-----|---------------|-----|
+| 1.34 → 1.35 | 3.7.a, 3.7.c, 3.7.d, then 3.7.h to 3.7.l | `vpc-cni` was re-applied with the same version (a no-op) |
+| 1.35 → 1.36 | 3.7.a, 3.7.b, 3.7.d, then 3.7.h to 3.7.l | `vpc-cni` and `metrics-server` already matched the Default, so they were skipped |
+
+Sub-steps 3.7.e to 3.7.g are the alternative for **self-managed** add-ons (an empty table in 3.4.a); they were not needed in the lab.
+
+#### 3.7.a Update `kube-proxy`
+
 **Explanation**
-Update each managed add-on to the **Default** version from Step 3.4. `--force` resolves field conflicts if someone edited the add-on by hand. Do `kube-proxy` first, check the pods, then `coredns`. `vpc-cni` is only updated if its Default changed. In this lab it stayed on `v1.22.4-eksbuild.3` for both hops (the 1.35 run re-applied the same version with `--force`, which is a no-op; the 1.36 run skipped it).
+Moves `kube-proxy` to the Default version for the target. Use `v1.35.3-eksbuild.52` for 1.35 and `v1.36.0-eksbuild.48` for 1.36.
 
-**Commands**
-
-*1.34 → 1.35 run*
-
-```bash
-eksctl update addon --name kube-proxy --cluster $CLUSTER --region $REGION --version v1.35.3-eksbuild.52 --force
-eksctl update addon --name vpc-cni    --cluster $CLUSTER --region $REGION --version v1.22.4-eksbuild.3  --force
-eksctl update addon --name coredns    --cluster $CLUSTER --region $REGION --version v1.13.2-eksbuild.51 --force
-```
-
-*1.35 → 1.36 run*
+**Command**
 
 ```bash
 eksctl update addon --name kube-proxy --cluster $CLUSTER --region $REGION --version v1.36.0-eksbuild.48 --force
-kubectl get pods -n kube-system          # kube-proxy pods restarted and Running?
-eksctl update addon --name coredns    --cluster $CLUSTER --region $REGION --version v1.14.7-eksbuild.11 --force
 ```
 
-*If `eksctl get addon` shows an empty table (self-managed add-ons)*: this was not the case in the lab, but the original method still applies:
-
-```bash
-eksctl utils update-kube-proxy --cluster $CLUSTER --region $REGION --approve
-eksctl utils update-aws-node   --cluster $CLUSTER --region $REGION --approve
-eksctl utils update-coredns    --cluster $CLUSTER --region $REGION --approve
-```
-
-Expected output of each: `[✔] "kube-proxy" is now up-to-date` (and similar for `aws-node`, `coredns`).
-
-**Expected output (important part)**
+**Expected output**
 
 ```
 [!]  no IAM OIDC provider associated with cluster, try 'eksctl utils associate-iam-oidc-provider ...'
-[ℹ]  Kubernetes version "1.35" in use by cluster "my-eks-cluster"
-[ℹ]  new version provided v1.35.3-eksbuild.52
+[ℹ]  Kubernetes version "1.36" in use by cluster "my-eks-cluster"
+[ℹ]  new version provided v1.36.0-eksbuild.48
 [ℹ]  updating addon
 [ℹ]  addon "kube-proxy" active
 ```
 
-* The `no IAM OIDC provider` warning is harmless here: these add-ons are running without IRSA roles. (If you installed Velero in Step 2.5 you already associated the provider.)
-* For `coredns` the log stops at `updating addon` with no `active` line. That is normal; verify below instead.
+**Verification**
+✅ The last line says `addon "kube-proxy" active`. The `no IAM OIDC provider` warning is harmless here (these add-ons run without IRSA roles).
+
+#### 3.7.b Check that the `kube-proxy` pods restarted cleanly (1.36 hop)
+
+**Explanation**
+Looks at the `kube-system` pods before touching CoreDNS.
+
+**Command**
+
+```bash
+kubectl get pods -n kube-system
+```
+
+**Expected output**
+
+```
+kube-proxy-6s22n                  1/1   Running   0   66s
+kube-proxy-kk4wl                  1/1   Running   0   64s
+coredns-547b59986f-bljhn          1/1   Running   0   37m
+```
 
 **Verification**
+✅ New `kube-proxy` pods with a small AGE, all `1/1 Running`.
+
+#### 3.7.c Update `vpc-cni` (1.35 hop only)
+
+**Explanation**
+Re-applies the Default version. It was already `v1.22.4-eksbuild.3`, so nothing really changes; skip it when the installed version already equals the Default.
+
+**Command**
+
+```bash
+eksctl update addon --name vpc-cni --cluster $CLUSTER --region $REGION --version v1.22.4-eksbuild.3 --force
+```
+
+**Expected output**
+
+```
+[ℹ]  updating addon
+[ℹ]  addon "vpc-cni" active
+```
+
+**Verification**
+✅ `addon "vpc-cni" active`.
+
+#### 3.7.d Update `coredns`
+
+**Explanation**
+Moves CoreDNS to the Default version. Use `v1.13.2-eksbuild.51` for 1.35 and `v1.14.7-eksbuild.11` for 1.36. The pods are replaced by a rolling update, so DNS keeps working.
+
+**Command**
+
+```bash
+eksctl update addon --name coredns --cluster $CLUSTER --region $REGION --version v1.14.7-eksbuild.11 --force
+```
+
+**Expected output**
+
+```
+[ℹ]  new version provided v1.14.7-eksbuild.11
+[ℹ]  updating addon
+```
+
+**Verification**
+✅ The command ends at `updating addon` with no `active` line. That is normal; confirm in 3.7.h to 3.7.l.
+
+#### 3.7.e Self-managed alternative: update `kube-proxy`
+
+**Explanation**
+Only if `eksctl get addon` was empty (not the case in the lab).
+
+**Command**
+
+```bash
+eksctl utils update-kube-proxy --cluster $CLUSTER --region $REGION --approve
+```
+
+**Expected output**
+
+```
+[✔]  "kube-proxy" is now up-to-date
+```
+
+**Verification**
+✅ The `is now up-to-date` line.
+
+#### 3.7.f Self-managed alternative: update `aws-node` (vpc-cni)
+
+**Explanation**
+The same for the VPC CNI DaemonSet.
+
+**Command**
+
+```bash
+eksctl utils update-aws-node --cluster $CLUSTER --region $REGION --approve
+```
+
+**Expected output**
+
+```
+[✔]  "aws-node" is now up-to-date
+```
+
+**Verification**
+✅ The `is now up-to-date` line.
+
+#### 3.7.g Self-managed alternative: update CoreDNS
+
+**Explanation**
+The same for CoreDNS.
+
+**Command**
+
+```bash
+eksctl utils update-coredns --cluster $CLUSTER --region $REGION --approve
+```
+
+**Expected output**
+
+```
+[✔]  "coredns" is now up-to-date
+```
+
+**Verification**
+✅ The `is now up-to-date` line.
+
+#### 3.7.h Verify the add-on table
+
+**Explanation**
+Shows all add-on versions and health after the updates.
+
+**Command**
 
 ```bash
 eksctl get addon --cluster $CLUSTER --region $REGION
+```
+
+**Expected output**
+
+```
+coredns         v1.14.7-eksbuild.11     ACTIVE  0
+kube-proxy      v1.36.0-eksbuild.48     ACTIVE  0
+metrics-server  v0.9.0-eksbuild.14      ACTIVE  0
+vpc-cni         v1.22.4-eksbuild.3      ACTIVE  0
+```
+
+**Verification**
+✅ All four `ACTIVE`, `ISSUES 0`, and the versions equal the Default versions from 3.4.g. `UPDATE AVAILABLE` may still list newer *builds* of the same version (for example `v1.36.0-eksbuild.55`); those are optional.
+
+#### 3.7.i Verify the add-on pods
+
+**Explanation**
+Confirms the add-on pods are running and that CoreDNS pods were replaced.
+
+**Command**
+
+```bash
 kubectl get pods -n kube-system
+```
+
+**Expected output**
+
+```
+aws-node-7rtnw                    2/2   Running   0   44m
+coredns-687dddfb64-7rbr5          1/1   Running   0   45s       <- new ReplicaSet hash = replaced
+coredns-687dddfb64-tf6gd          1/1   Running   0   45s
+kube-proxy-6s22n                  1/1   Running   0   5m28s
+metrics-server-68c65f79d8-744gh   1/1   Running   0   38m
+```
+
+**Verification**
+✅ All `Running`, and the CoreDNS pod names have a new hash with a small AGE.
+
+#### 3.7.j Wait for the CoreDNS rollout to finish
+
+**Explanation**
+Blocks until the CoreDNS Deployment has finished its rolling update.
+
+**Command**
+
+```bash
 kubectl -n kube-system rollout status deployment/coredns
+```
 
-# Prove DNS still works inside the cluster (FQDN of the demo service)
+**Expected output**
+
+```
+deployment "coredns" successfully rolled out
+```
+
+**Verification**
+✅ The `successfully rolled out` line.
+
+#### 3.7.k Test DNS from inside the cluster
+
+**Explanation**
+Starts a temporary busybox pod and looks up the demo service by its full name. The pod is removed afterwards (`--rm`).
+
+**Command**
+
+```bash
 kubectl run dnstest --rm -it --restart=Never --image=busybox:1.36 -- nslookup web.demo.svc.cluster.local
+```
 
+**Expected output**
+
+```
+Server:         10.100.0.10
+Address:        10.100.0.10:53
+
+Name:   web.demo.svc.cluster.local
+Address: 10.100.153.157
+
+pod "dnstest" deleted from default namespace
+```
+
+**Verification**
+✅ The address equals the `CLUSTER-IP` of `service/web` (`kubectl get svc web -n demo`).
+
+#### 3.7.l Check CoreDNS status and version in AWS
+
+**Explanation**
+A last confirmation from the EKS API.
+
+**Command**
+
+```bash
 aws eks describe-addon --cluster-name $CLUSTER --addon-name coredns --region $REGION \
   --query "addon.{Version:addonVersion,Status:status}" --output text
 ```
 
+**Expected output**
+
 ```
-coredns         v1.14.7-eksbuild.11   ACTIVE  0
-kube-proxy      v1.36.0-eksbuild.48   ACTIVE  0
-metrics-server  v0.9.0-eksbuild.14    ACTIVE  0
-vpc-cni         v1.22.4-eksbuild.3    ACTIVE  0
-
-coredns-687dddfb64-7rbr5   1/1   Running   0   45s       <- new ReplicaSet hash = pods were replaced
-kube-proxy-6s22n           1/1   Running   0   5m28s
-
-deployment "coredns" successfully rolled out
-
-Name:   web.demo.svc.cluster.local
-Address: 10.100.153.157                                  <- equals the CLUSTER-IP of service/web
 ACTIVE  v1.14.7-eksbuild.11
 ```
 
-✅ All four add-ons `ACTIVE` with `ISSUES 0`, all `kube-system` pods `Running`, the CoreDNS rollout finished, and the DNS lookup returns the service IP. The `UPDATE AVAILABLE` column may still list newer *builds* of the same version (for example `v1.36.0-eksbuild.55`); those are optional.
+**Verification**
+✅ `ACTIVE` and the target CoreDNS version.
 
 ---
 
 ### Step 3.8: Upgrade the worker nodes (node group)
 
-**Explanation**
-The managed node group is rolled to the new Kubernetes version and the matching Amazon Linux 2023 release. EKS **creates new nodes first**, cordons the old ones (`SchedulingDisabled`), drains them and terminates them. Your demo app survives because it has 2 replicas.
+The managed node group is rolled to the new Kubernetes version and matching Amazon Linux 2023 release. EKS **creates new nodes first**, cordons the old ones (`SchedulingDisabled`), drains them and terminates them. Your demo app survives because it has 2 replicas. Open **three terminals**: run 3.8.a in the first, 3.8.b in the second and 3.8.c in the third.
 
-**Commands**
+#### 3.8.a Start the node group upgrade (terminal 1)
+
+**Explanation**
+Rolls the node group to `TARGET`.
+
+**Command**
 
 ```bash
-# Terminal 1: the upgrade
 eksctl upgrade nodegroup --name $NODEGROUP --cluster $CLUSTER --region $REGION --kubernetes-version $TARGET
-
-# Terminal 2: watch nodes
-kubectl get nodes -w
-
-# Terminal 3: watch the demo pods
-kubectl get pods -n demo -w
 ```
 
-**Expected output (important part)**
-
-1.35 run (about 13.5 minutes):
+**Expected output**
 
 ```
+1.35 run (about 13.5 min):
 05:18:55 [ℹ]  will upgrade nodes to release version: 1.35.9-20261019
 05:18:55 [ℹ]  upgrading nodegroup version
 05:31:25 [ℹ]  nodegroup successfully upgraded
-```
 
-1.36 run (about 11.5 minutes):
-
-```
+1.36 run (about 11.5 min):
 06:07:25 [ℹ]  will upgrade nodes to release version: 1.36.5-20261019
 06:18:50 [ℹ]  nodegroup successfully upgraded
 ```
 
-Terminal 2, what the node watch looks like (1.36 run, trimmed):
+**Verification**
+✅ The last line says `nodegroup successfully upgraded`.
+
+#### 3.8.b Watch the nodes change (terminal 2)
+
+**Explanation**
+Streams node changes live. Press `Ctrl+C` when only new nodes remain.
+
+**Command**
+
+```bash
+kubectl get nodes -w
+```
+
+**Expected output**
 
 ```
 ip-192-168-5-11.ec2.internal     Ready                        v1.35.9-eks-117f323   <- old
@@ -1116,150 +2313,499 @@ ip-192-168-51-209.ec2.internal   Ready,SchedulingDisabled     v1.35.9-eks-117f32
 ip-192-168-51-209.ec2.internal   NotReady,SchedulingDisabled  v1.35.9-eks-117f323   <- old, being terminated
 ```
 
-Terminal 3, what the pod watch looks like:
+**Verification**
+✅ New nodes become `Ready` first, then each old node goes `SchedulingDisabled`, then `NotReady`, then disappears.
+
+#### 3.8.c Watch the demo pods move (terminal 3)
+
+**Explanation**
+Streams the demo pods so you can see they are replaced one at a time.
+
+**Command**
+
+```bash
+kubectl get pods -n demo -w
+```
+
+**Expected output**
 
 ```
-web-64c966cf88-2nqhv   1/1   Terminating          <- one old replica goes away
+web-64c966cf88-2nqhv   1/1   Terminating
 web-64c966cf88-fjnwk   0/1   Pending -> ContainerCreating -> 1/1 Running
 web-64c966cf88-hhvcl   1/1   Terminating          <- only after the first replacement is Running
 web-64c966cf88-csq45   0/1   Pending -> ContainerCreating -> 1/1 Running
 ```
 
-Press `Ctrl+C` in the watch terminals when the node list shows only new nodes.
-
 **Verification**
+✅ In the 1.36 watch a replacement pod was `Running` before the second old pod was terminated, so the app stayed available.
+
+#### 3.8.d Check the nodes after the upgrade
+
+**Explanation**
+Shows the final node list.
+
+**Command**
 
 ```bash
 kubectl get nodes
+```
+
+**Expected output**
+
+```
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-16-172.ec2.internal   Ready    <none>   12m   v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   Ready    <none>   12m   v1.36.5-eks-117f323
+```
+
+**Verification**
+✅ Exactly 2 nodes, both `Ready`, both on the new version.
+
+#### 3.8.e Check the node group in AWS
+
+**Explanation**
+Confirms the node group's version and release version from the EKS API.
+
+**Command**
+
+```bash
 aws eks describe-nodegroup --cluster-name $CLUSTER --nodegroup-name $NODEGROUP --region $REGION \
   --query "nodegroup.{Version:version,Release:releaseVersion,Status:status}" --output table
 ```
 
-```
-ip-192-168-16-172.ec2.internal   Ready   <none>   12m   v1.36.5-eks-117f323
-ip-192-168-35-221.ec2.internal   Ready   <none>   12m   v1.36.5-eks-117f323
+**Expected output**
 
+```
 |      Release     | Status  |  Version  |
 |  1.36.5-20261019 |  ACTIVE |  1.36     |
 ```
 
-✅ Exactly 2 nodes, both `Ready`, both on the new version; node group `ACTIVE` with the new release version; in the 1.36 pod watch the demo pods were never both down at the same time (a replacement was `Running` before the second old pod was terminated).
+**Verification**
+✅ `ACTIVE`, with the new version and release.
 
 ---
 
 ### Step 3.9: Verify the upgrade
 
-**Explanation**
-A final, short checklist that proves the whole cluster is on the new version and your app is healthy.
+A final checklist that proves the whole cluster is on the new version and your app is healthy. Run the six commands one by one.
 
-**Commands**
+#### 3.9.a API server version
+
+**Explanation**
+Confirms the control plane version.
+
+**Command**
 
 ```bash
 kubectl version
+```
+
+**Expected output**
+
+```
+Server Version: v1.35.8-eks-b9510e3        (after the 1.36 hop: v1.36.4-eks-b9510e3)
+```
+
+**Verification**
+✅ `Server Version` is the new version.
+
+#### 3.9.b Node versions
+
+**Explanation**
+Confirms every node runs the new version and is `Ready`.
+
+**Command**
+
+```bash
 kubectl get nodes
+```
+
+**Expected output**
+
+```
+2 nodes, STATUS Ready, VERSION v1.35.9-eks-117f323        (after the 1.36 hop: v1.36.5-eks-117f323)
+```
+
+**Verification**
+✅ Both nodes `Ready` at the new version.
+
+#### 3.9.c All pods
+
+**Explanation**
+Confirms every pod in every namespace is healthy.
+
+**Command**
+
+```bash
 kubectl get pods -A
+```
+
+**Expected output**
+
+```
+demo          web-64c966cf88-2nqhv    1/1   Running
+kube-system   aws-node-7rtnw          2/2   Running
+kube-system   coredns-547b59986f-bljhn   1/1   Running
+kube-system   kube-proxy-28lv8        1/1   Running
+kube-system   metrics-server-68c65f79d8-744gh   1/1   Running
+```
+
+**Verification**
+✅ Every pod is `Running`.
+
+#### 3.9.d Demo application
+
+**Explanation**
+Confirms your sample app survived the upgrade.
+
+**Command**
+
+```bash
 kubectl get all -n demo
+```
+
+**Expected output**
+
+```
+pod/web-...   1/1   Running   (2 pods)
+service/web   ClusterIP   10.100.153.157   80/TCP
+deployment.apps/web   2/2   2   2
+replicaset.apps/web-64c966cf88   2   2   2
+```
+
+**Verification**
+✅ `deployment.apps/web   2/2`.
+
+#### 3.9.e Cluster version in AWS
+
+**Explanation**
+Asks AWS (not the API server) for the cluster version.
+
+**Command**
+
+```bash
 aws eks describe-cluster --name $CLUSTER --region $REGION --query "cluster.version" --output text
+```
+
+**Expected output**
+
+```
+1.35        (after the 1.36 hop: 1.36)
+```
+
+**Verification**
+✅ Prints the new version.
+
+#### 3.9.f Add-ons
+
+**Explanation**
+Confirms add-on versions and health once more.
+
+**Command**
+
+```bash
 eksctl get addon --cluster $CLUSTER --region $REGION
 ```
 
-**Expected output (important part)**
+**Expected output**
 
-| Check | After 1.35 hop | After 1.36 hop |
-|-------|----------------|----------------|
-| `kubectl version` server | `v1.35.8-eks-b9510e3` | `v1.36.4-eks-b9510e3` |
-| `kubectl get nodes` | 2 × `Ready`, `v1.35.9-eks-117f323` | 2 × `Ready`, `v1.36.5-eks-117f323` |
-| `kubectl get pods -A` | all `Running` | all `Running` |
-| `deployment.apps/web` | `2/2` | `2/2` |
-| `aws eks describe-cluster ... cluster.version` | `1.35` | `1.36` |
+```
+All four add-ons ACTIVE, ISSUES 0 (see 3.7.h for the versions).
+```
 
 **Verification**
-✅ All six rows match the table. 🎉 The hop is complete. Wait until you are happy with the cluster (an hour is plenty for a lab) and only then repeat Steps 3.1 to 3.9 with the next `TARGET`.
+✅ `ACTIVE` and `0` issues for all four. 🎉 The hop is complete. Wait until you are happy with the cluster (an hour is plenty for a lab) before repeating Steps 3.1 to 3.9 with the next `TARGET`.
 
 ---
 
 ### Step 3.10: Extra post-upgrade health checks (run after the 1.36 hop)
 
-**Explanation**
 Deeper checks that go beyond "pods are Running": node conditions, recent events, resource usage, the API server's own readiness (including etcd), and AWS's record of the upgrade. They are optional but cheap, and they are the closest you can get to "checking etcd and the API server" on EKS.
 
-**Commands**
+#### 3.10.a Node health conditions
+
+**Explanation**
+Shows the first condition (memory pressure) of each node. Run `kubectl describe nodes | grep -A8 Conditions` to see them all.
+
+**Command**
 
 ```bash
-# Node health conditions
 kubectl describe nodes | grep -A3 Conditions
-
-# Recent events (long output; add | tail -30, or only warnings)
-kubectl get events -A --sort-by=.lastTimestamp | tail -30
-kubectl get events -A --field-selector type=Warning
-
-# Workload controllers and resource usage (top works because metrics-server is installed)
-kubectl get deploy,statefulset,daemonset -A
-kubectl top pods -A
-kubectl get daemonset aws-node -n kube-system
-kubectl get daemonset kube-proxy -n kube-system
-
-# API server readiness, including etcd (AWS-managed)
-kubectl get --raw='/readyz?verbose'
-
-# AWS's own record of the upgrade
-aws eks describe-update --name $CLUSTER --region $REGION \
-  --update-id $(aws eks list-updates --name $CLUSTER --region $REGION --query "updateIds[-1]" --output text)
-
-# Control plane logging status
-aws eks describe-cluster --name $CLUSTER --region $REGION --query "cluster.logging.clusterLogging"
-
-# Add-ons, node group and next-version insights
-eksctl get addon --cluster $CLUSTER --region $REGION
-aws eks list-insights --cluster-name $CLUSTER --region $REGION \
-  --filter kubernetesVersions=1.37 \
-  --query "insights[].{Name:name,Status:insightStatus.status}" --output table
 ```
 
-**Expected output (important part)**
+**Expected output**
 
 ```
 MemoryPressure   False   ...   KubeletHasSufficientMemory   kubelet has sufficient memory available
+```
 
+**Verification**
+✅ `False` (no pressure) for every node.
+
+#### 3.10.b Recent events
+
+**Explanation**
+Shows what the cluster did recently, newest last. The output is long, so only the end is shown here.
+
+**Command**
+
+```bash
+kubectl get events -A --sort-by=.lastTimestamp | tail -30
+```
+
+**Expected output**
+
+```
+default   9m9s   Normal    NodeNotReady   node/ip-192-168-5-11.ec2.internal
+default   8m31s  Normal    RemovingNode   node/ip-192-168-5-11.ec2.internal
+```
+
+**Verification**
+✅ Events match what you did (nodes removed, pods rescheduled). Warnings you can ignore right after a node roll: `FailedDaemonPod` / `NodeShutdown` for `aws-node` and `kube-proxy` on the **old** nodes, `Readiness probe failed` for a CoreDNS pod in its first seconds, `InvalidDiskCapacity` on a fresh node.
+
+#### 3.10.c Only the warning events
+
+**Explanation**
+Filters the events down to warnings, so real problems stand out.
+
+**Command**
+
+```bash
+kubectl get events -A --field-selector type=Warning
+```
+
+**Expected output**
+
+```
+(old-node warnings from the drain, as listed in 3.10.b; nothing that keeps repeating on a current node)
+```
+
+**Verification**
+✅ No warning keeps repeating on a *current* node.
+
+#### 3.10.d All workload controllers
+
+**Explanation**
+Shows Deployments, StatefulSets and DaemonSets and whether they are fully ready.
+
+**Command**
+
+```bash
+kubectl get deploy,statefulset,daemonset -A
+```
+
+**Expected output**
+
+```
 demo          deployment.apps/web              2/2
 kube-system   deployment.apps/coredns          2/2
 kube-system   deployment.apps/metrics-server   2/2
 kube-system   daemonset.apps/aws-node          2   2   2   2   2
 kube-system   daemonset.apps/kube-proxy        2   2   2   2   2
+```
 
-demo          web-64c966cf88-csq45     0m    3Mi
-kube-system   coredns-687dddfb64-7t2hx 1m    10Mi
+**Verification**
+✅ `READY` equals `DESIRED` everywhere.
 
+#### 3.10.e Resource usage
+
+**Explanation**
+Shows CPU and memory per pod. It works because the `metrics-server` add-on is installed.
+
+**Command**
+
+```bash
+kubectl top pods -A
+```
+
+**Expected output**
+
+```
+demo          web-64c966cf88-csq45        0m    3Mi
+kube-system   coredns-687dddfb64-7t2hx    1m    10Mi
+kube-system   metrics-server-68c65f79d8-cjtrf   2m   18Mi
+```
+
+**Verification**
+✅ Numbers are returned (an error here would mean `metrics-server` is not healthy).
+
+#### 3.10.f `aws-node` DaemonSet
+
+**Explanation**
+Checks the VPC CNI DaemonSet is fully rolled out on every node.
+
+**Command**
+
+```bash
+kubectl get daemonset aws-node -n kube-system
+```
+
+**Expected output**
+
+```
+aws-node   2   2   2   2   2   <none>   151m
+```
+
+**Verification**
+✅ `DESIRED`, `CURRENT`, `READY`, `UP-TO-DATE`, `AVAILABLE` are all `2`.
+
+#### 3.10.g `kube-proxy` DaemonSet
+
+**Explanation**
+The same check for `kube-proxy`.
+
+**Command**
+
+```bash
+kubectl get daemonset kube-proxy -n kube-system
+```
+
+**Expected output**
+
+```
+kube-proxy   2   2   2   2   2   <none>   151m
+```
+
+**Verification**
+✅ All columns `2`.
+
+#### 3.10.h API server and etcd readiness
+
+**Explanation**
+Asks the API server to report each of its own health checks, including etcd (which AWS manages for you).
+
+**Command**
+
+```bash
+kubectl get --raw='/readyz?verbose'
+```
+
+**Expected output**
+
+```
 [+]ping ok
+[+]log ok
 [+]etcd ok
 [+]etcd-readiness ok
 [+]informer-sync ok
 ...
+```
 
+**Verification**
+✅ Every line starts with `[+]` and says `ok`, in particular `etcd ok` and `etcd-readiness ok`.
+
+#### 3.10.i AWS's record of the upgrade
+
+**Explanation**
+Fetches the latest update record of the cluster. The inner command finds the newest update ID.
+
+**Command**
+
+```bash
+aws eks describe-update --name $CLUSTER --region $REGION \
+  --update-id $(aws eks list-updates --name $CLUSTER --region $REGION --query "updateIds[-1]" --output text)
+```
+
+**Expected output**
+
+```
 "status": "Successful",
 "type": "VersionUpdate",
 "params": [ { "type": "Version", "value": "1.36" }, { "type": "PlatformVersion", "value": "eks.15" } ],
 "errors": []
+```
 
-"enabled": false          <- all five control-plane log types are disabled (default)
+**Verification**
+✅ `Successful`, the new version, and an empty `errors` list.
 
+#### 3.10.j Control plane logging status
+
+**Explanation**
+Shows whether control plane logs (api, audit, authenticator, controllerManager, scheduler) are sent to CloudWatch.
+
+**Command**
+
+```bash
+aws eks describe-cluster --name $CLUSTER --region $REGION --query "cluster.logging.clusterLogging"
+```
+
+**Expected output**
+
+```
+[ { "types": [ "api", "audit", "authenticator", "controllerManager", "scheduler" ], "enabled": false } ]
+```
+
+**Verification**
+✅ `false` is the default and not a problem. Enable logging only if you need it (it costs money).
+
+#### 3.10.k Add-on table
+
+**Explanation**
+Final add-on check after the whole cycle.
+
+**Command**
+
+```bash
+eksctl get addon --cluster $CLUSTER --region $REGION
+```
+
+**Expected output**
+
+```
+coredns         v1.14.7-eksbuild.11     ACTIVE  0
+kube-proxy      v1.36.0-eksbuild.48     ACTIVE  0
+metrics-server  v0.9.0-eksbuild.14      ACTIVE  0
+vpc-cni         v1.22.4-eksbuild.3      ACTIVE  0
+```
+
+**Verification**
+✅ All `ACTIVE`, `ISSUES 0`.
+
+#### 3.10.l Insights for the next version
+
+**Explanation**
+Looks one version ahead for deprecated APIs.
+
+**Command**
+
+```bash
+aws eks list-insights --cluster-name $CLUSTER --region $REGION \
+  --filter kubernetesVersions=1.37 \
+  --query "insights[].{Name:name,Status:insightStatus.status}" --output table
+```
+
+**Expected output**
+
+```
 |  Deprecated APIs removed in Kubernetes v1.37  |  PASSING |
 ```
 
 **Verification**
-✅ No pressure conditions on the nodes. ✅ All deployments and daemonsets fully ready. ✅ `/readyz` shows `etcd ok`. ✅ The update record says `Successful` with an empty `errors` list. ✅ No deprecated-API findings for the next version (`1.37`).
+✅ `PASSING`.
 
-Events you can safely ignore right after a node roll (seen in the real run): `FailedDaemonPod` / `NodeShutdown` for `aws-node` and `kube-proxy` on the **old** nodes while they drain, `Unhealthy ... Readiness probe failed` for a CoreDNS pod in the first seconds after it starts, and `InvalidDiskCapacity ... invalid capacity 0 on image filesystem` on a freshly started node. Warnings that keep repeating on a *current* node are the ones to investigate.
+#### 3.10.m Extra DNS probe (optional)
 
-An extra DNS probe was also run:
+**Explanation**
+A second DNS test using a short name.
+
+**Command**
 
 ```bash
 kubectl run dns-test --image=busybox:1.36 --rm -it --restart=Never -- nslookup kubernetes.default
 ```
 
-It printed `** server can't find kubernetes.default: NXDOMAIN` although CoreDNS was healthy and the earlier lookup of `web.demo.svc.cluster.local` had worked. See the Troubleshooting table: use the full name `kubernetes.default.svc.cluster.local` for this kind of test.
+**Expected output**
+
+```
+** server can't find kubernetes.default: NXDOMAIN
+pod "dns-test" deleted from default namespace
+```
+
+**Verification**
+⚠️ In the lab this returned `NXDOMAIN` although CoreDNS was healthy and 3.7.k had worked. Use the full name `kubernetes.default.svc.cluster.local` for this kind of test (see Troubleshooting).
 
 ---
+
 
 ## 4. Comparison: 1.34 vs 1.35 vs 1.36
 

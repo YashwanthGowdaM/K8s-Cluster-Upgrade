@@ -1,0 +1,1029 @@
+ubuntu@ip-172-31-30-166:~$ curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+
+sudo mv /tmp/eksctl /usr/local/bin
+
+eksctl version
+0.231.0
+ubuntu@ip-172-31-30-166:~$
+
+
+ubuntu@ip-172-31-30-166:~$ kubectl version --client
+Client Version: v1.37.1
+Kustomize Version: v5.8.1
+ubuntu@ip-172-31-30-166:~$
+
+ubuntu@ip-172-31-30-166:~$ aws --version
+aws-cli/2.38.5 Python/3.14.8 Linux/7.0.0-1014-aws exe/x86_64.ubuntu.26
+ubuntu@ip-172-31-30-166:~$
+
+ubuntu@ip-172-31-30-166:~$ eksctl create cluster --name my-eks-cluster --nodegroup-name my-worker-node \
+  --node-type t2.medium --nodes 2 --managed --region us-east-1
+2026-10-24 03:43:07 [ℹ]  eksctl version 0.231.0
+2026-10-24 03:43:07 [ℹ]  using region us-east-1
+2026-10-24 03:43:07 [ℹ]  setting availability zones to [us-east-1f us-east-1d]
+2026-10-24 03:43:07 [ℹ]  subnets for us-east-1f - public:192.168.0.0/19 private:192.168.64.0/19
+2026-10-24 03:43:07 [ℹ]  subnets for us-east-1d - public:192.168.32.0/19 private:192.168.96.0/19
+2026-10-24 03:43:07 [ℹ]  nodegroup "my-worker-node" will use "" [AmazonLinux2023/1.34]
+2026-10-24 03:43:07 [!]  Auto Mode will be enabled by default in an upcoming release of eksctl. This means managed node groups and managed networking add-ons will no longer be created by default. To maintain current behavior, explicitly set 'autoModeConfig.enabled: false' in your cluster configuration. Learn more: https://eksctl.io/usage/auto-mode/
+2026-10-24 03:43:07 [ℹ]  using Kubernetes version 1.34
+2026-10-24 03:43:07 [ℹ]  creating EKS cluster "my-eks-cluster" in "us-east-1" region with managed nodes
+2026-10-24 03:43:07 [ℹ]  will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup
+2026-10-24 03:43:07 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=us-east-1 --cluster=my-eks-cluster'
+2026-10-24 03:43:07 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "my-eks-cluster" in "us-east-1"
+2026-10-24 03:43:07 [ℹ]  CloudWatch logging will not be enabled for cluster "my-eks-cluster" in "us-east-1"
+2026-10-24 03:43:07 [ℹ]  you can enable it with 'eksctl utils update-cluster-logging --enable-types={SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)} --region=us-east-1 --cluster=my-eks-cluster'
+2026-10-24 03:43:07 [ℹ]  default addons vpc-cni, kube-proxy, coredns, metrics-server were not specified, will install them as EKS addons
+2026-10-24 03:43:07 [ℹ]
+2 sequential tasks: { create cluster control plane "my-eks-cluster",
+    2 sequential sub-tasks: {
+        2 sequential sub-tasks: {
+            1 task: { create addons },
+            wait for control plane to become ready,
+        },
+        create managed nodegroup "my-worker-node",
+    }
+}
+2026-10-24 03:43:07 [ℹ]  building cluster stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 03:43:07 [ℹ]  deploying stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 03:43:37 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 03:44:07 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 03:45:07 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 03:46:07 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 03:47:07 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 03:48:07 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 03:49:07 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 03:50:07 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 03:51:08 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 03:52:08 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 03:53:08 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 03:54:08 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 03:54:09 [!]  recommended policies were found for "vpc-cni" addon, but since OIDC is disabled on the cluster, eksctl cannot configure the requested permissions; the recommended way to provide IAM permissions for "vpc-cni" addon is via pod identity associations; after addon creation is completed, add all recommended policies to the config file, under `addon.PodIdentityAssociations`, and run `eksctl update addon`
+2026-10-24 03:54:09 [ℹ]  creating addon: vpc-cni
+2026-10-24 03:54:09 [ℹ]  successfully created addon: vpc-cni
+2026-10-24 03:54:09 [ℹ]  creating addon: kube-proxy
+2026-10-24 03:54:10 [ℹ]  successfully created addon: kube-proxy
+2026-10-24 03:54:10 [ℹ]  creating addon: coredns
+2026-10-24 03:54:10 [ℹ]  successfully created addon: coredns
+2026-10-24 03:56:10 [ℹ]  building managed nodegroup stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 03:56:11 [ℹ]  deploying stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 03:56:11 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 03:56:41 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 03:57:40 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 03:59:32 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 03:59:32 [ℹ]  waiting for the control plane to become ready
+2026-10-24 03:59:33 [✔]  saved kubeconfig as "/home/ubuntu/.kube/config"
+2026-10-24 03:59:33 [ℹ]  no tasks
+2026-10-24 03:59:33 [✔]  all EKS cluster resources for "my-eks-cluster" have been created
+2026-10-24 03:59:33 [ℹ]  nodegroup "my-worker-node" has 2 node(s)
+2026-10-24 03:59:33 [ℹ]  node "ip-192-168-21-69.ec2.internal" is ready
+2026-10-24 03:59:33 [ℹ]  node "ip-192-168-44-47.ec2.internal" is ready
+2026-10-24 03:59:33 [ℹ]  waiting for at least 2 node(s) to become ready in "my-worker-node"
+2026-10-24 03:59:33 [ℹ]  nodegroup "my-worker-node" has 2 node(s)
+2026-10-24 03:59:33 [ℹ]  node "ip-192-168-21-69.ec2.internal" is ready
+2026-10-24 03:59:33 [ℹ]  node "ip-192-168-44-47.ec2.internal" is ready
+2026-10-24 03:59:33 [✔]  created 1 managed nodegroup(s) in cluster "my-eks-cluster"
+2026-10-24 03:59:33 [ℹ]  creating addon: metrics-server
+2026-10-24 03:59:33 [ℹ]  successfully created addon: metrics-server
+2026-10-24 03:59:34 [ℹ]  kubectl command should work with "/home/ubuntu/.kube/config", try 'kubectl get nodes'
+2026-10-24 03:59:34 [✔]  EKS cluster "my-eks-cluster" in "us-east-1" region is ready
+ubuntu@ip-172-31-30-166:~$ source ~/.bashrc
+ubuntu@ip-172-31-30-166:~$ echo -e "$CLUSTER\n$REGION\n$NODEGROUP\n$ACCOUNT"
+my-eks-cluster
+us-east-1
+my-worker-node
+003344631245
+ubuntu@ip-172-31-30-166:~$
+
+ubuntu@ip-172-31-30-166:~$ aws eks update-kubeconfig --name $CLUSTER --region $REGION
+Added new context arn:aws:eks:us-east-1:003344631245:cluster/my-eks-cluster to /home/ubuntu/.kube/config
+ubuntu@ip-172-31-30-166:~$
+ubuntu@ip-172-31-30-166:~$ kubectl get nodes
+NAME                            STATUS   ROLES    AGE     VERSION
+ip-192-168-21-69.ec2.internal   Ready    <none>   3m17s   v1.34.12-eks-117f323
+ip-192-168-44-47.ec2.internal   Ready    <none>   3m16s   v1.34.12-eks-117f323
+ubuntu@ip-172-31-30-166:~$ aws eks describe-cluster --name $CLUSTER --region $REGION --query "cluster.version" --output text
+1.34
+ubuntu@ip-172-31-30-166:~$ aws eks describe-cluster-versions --region $REGION \
+  --query "clusterVersions[].{Version:clusterVersion,Status:status}" --output table
+---------------------------------
+|    DescribeClusterVersions    |
++-------------------+-----------+
+|      Status       |  Version  |
++-------------------+-----------+
+|  STANDARD_SUPPORT |  1.37     |
+|  STANDARD_SUPPORT |  1.36     |
+|  STANDARD_SUPPORT |  1.35     |
+|  STANDARD_SUPPORT |  1.34     |
+|  EXTENDED_SUPPORT |  1.33     |
+|  EXTENDED_SUPPORT |  1.32     |
+|  EXTENDED_SUPPORT |  1.31     |
++-------------------+-----------+
+ubuntu@ip-172-31-30-166:~$
+ubuntu@ip-172-31-30-166:~$ kubectl create deployment web --image=nginx --replicas=2 -n demo
+deployment.apps/web created
+ubuntu@ip-172-31-30-166:~$ kubectl expose deployment web --port=80 -n demo
+service/web exposed
+ubuntu@ip-172-31-30-166:~$ kubectl get all -n demo
+NAME                       READY   STATUS    RESTARTS   AGE
+pod/web-64c966cf88-nlgz5   1/1     Running   0          20s
+pod/web-64c966cf88-wjfxx   1/1     Running   0          20s
+
+NAME          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+service/web   ClusterIP   10.100.153.157   <none>        80/TCP    11s
+
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/web   2/2     2            2           20s
+
+NAME                             DESIRED   CURRENT   READY   AGE
+replicaset.apps/web-64c966cf88   2         2         2       20s
+ubuntu@ip-172-31-30-166:~$
+ubuntu@EKSClient:~$ kns
+NAME              STATUS   AGE
+default           Active   12m
+demo              Active   2m5s
+kube-node-lease   Active   12m
+kube-public       Active   12m
+kube-system       Active   12m
+ubuntu@EKSClient:~$ kgp
+NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE
+kube-system   aws-node-rmql9                    2/2     Running   0          6m43s
+kube-system   aws-node-s7wxr                    2/2     Running   0          6m42s
+kube-system   coredns-7879986bf8-7sqmx          1/1     Running   0          10m
+kube-system   coredns-7879986bf8-j2kn4          1/1     Running   0          10m
+kube-system   kube-proxy-jm6tg                  1/1     Running   0          6m42s
+kube-system   kube-proxy-zk6f4                  1/1     Running   0          6m43s
+kube-system   metrics-server-68c65f79d8-8lcjw   1/1     Running   0          4m37s
+kube-system   metrics-server-68c65f79d8-wttv2   1/1     Running   0          4m37s
+
+ubuntu@EKSClient:~/eks-backups$ mkdir -p ~/eks-backups && cd ~/eks-backups
+cat > backup-k8s.sh <<'EOF'
+#!/bin/bash
+# Exports all Kubernetes objects of the current cluster to YAML files.
+set -u
+STAMP=$(date +%Y%m%d-%H%M%S)
+DIR="$HOME/eks-backups/k8s-backup-$STAMP"
+mkdir -p "$DIR/cluster-scoped" "$DIR/namespaced"
+
+echo ">> Backing up cluster-scoped resources..."
+for r in $(kubectl api-resources --namespaced=false --verbs=list -o name | grep -v -E '^(events|events.events.k8s.io|componentstatuses)$'); do
+  if [ -n "$(kubectl get "$r" -o name 2>/dev/null)" ]; then
+    kubectl get "$r" -o yaml > "$DIR/cluster-scoped/$r.yaml" 2>/dev/null
+  fi
+done
+
+echo ">> Backing up namespaced resources..."
+NAMESPACED=$(kubectl api-resources --namespaced=true --verbs=list -o name | grep -v -E '^(events|events.events.k8s.io|endpoints|endpointslices.discovery.k8s.io)$')
+for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
+  mkdir -p "$DIR/namespaced/$ns"
+  for r in $NAMESPACED; do
+    if [ -n "$(kubectl get "$r" -n "$ns" -o name 2>/dev/null)" ]; then
+      kubectl get "$r" -n "$ns" -o yaml > "$DIR/namespaced/$ns/$r.yaml" 2>/dev/null
+    fi
+  done
+  echo "   namespace $ns done"
+done
+
+tar -czf "$DIR.tar.gz" -C "$HOME/eks-backups" "k8s-backup-$STAMP"
+echo ">> DONE. Backup folder : $DIR"
+echo ">> DONE. Backup archive: $DIR.tar.gz"
+EOF
+chmod +x backup-k8s.sh
+ubuntu@EKSClient:~/eks-backups$ ls
+backup-k8s.sh
+ubuntu@EKSClient:~/eks-backups$ ./backup-k8s.sh
+>> Backing up cluster-scoped resources...
+>> Backing up namespaced resources...
+   namespace default done
+   namespace demo done
+   namespace kube-node-lease done
+   namespace kube-public done
+   namespace kube-system done
+>> DONE. Backup folder : /home/ubuntu/eks-backups/k8s-backup-20261024-040705
+>> DONE. Backup archive: /home/ubuntu/eks-backups/k8s-backup-20261024-040705.tar.gz
+ubuntu@EKSClient:~/eks-backups$ ls /home/ubuntu/eks-backups/k8s-backup-20261024-040705/namespaced/demo/
+configmaps.yaml  deployments.apps.yaml  pods.metrics.k8s.io.yaml  pods.yaml  replicasets.apps.yaml  serviceaccounts.yaml  services.yaml
+ubuntu@EKSClient:~/eks-backups$
+
+
+ubuntu@EKSClient:~/eks-backups$ mkdir -p ~/eks-backups/aws-config-$(date +%Y%m%d) && cd ~/eks-backups/aws-config-$(date +%Y%m%d)
+
+aws eks describe-cluster --name $CLUSTER --region $REGION > cluster.json
+aws eks list-nodegroups --cluster-name $CLUSTER --region $REGION > nodegroups-list.json
+aws eks describe-nodegroup --cluster-name $CLUSTER --nodegroup-name $NODEGROUP --region $REGION > nodegroup.json
+aws eks list-addons --cluster-name $CLUSTER --region $REGION > addons.json
+eksctl get cluster --name $CLUSTER --region $REGION -o yaml > eksctl-cluster.yaml
+eksctl get nodegroup --cluster $CLUSTER --region $REGION -o yaml > eksctl-nodegroup.yaml
+kubectl version > kubectl-version.txt
+kubectl get nodes -o wide > nodes.txt
+
+ls -l
+Warning: version difference between client (1.37) and server (1.34) exceeds the supported minor version skew of +/-1
+total 40
+-rw-rw-r-- 1 ubuntu ubuntu  111 Oct 24 04:13 addons.json
+-rw-rw-r-- 1 ubuntu ubuntu 5650 Oct 24 04:13 cluster.json
+-rw-rw-r-- 1 ubuntu ubuntu 4383 Oct 24 04:13 eksctl-cluster.yaml
+-rw-rw-r-- 1 ubuntu ubuntu  509 Oct 24 04:13 eksctl-nodegroup.yaml
+-rw-rw-r-- 1 ubuntu ubuntu   87 Oct 24 04:13 kubectl-version.txt
+-rw-rw-r-- 1 ubuntu ubuntu 2311 Oct 24 04:13 nodegroup.json
+-rw-rw-r-- 1 ubuntu ubuntu   55 Oct 24 04:13 nodegroups-list.json
+-rw-rw-r-- 1 ubuntu ubuntu  606 Oct 24 04:13 nodes.txt
+ubuntu@EKSClient:~/eks-backups/aws-config-20261024$
+
+ubuntu@EKSClient:~/eks-backups/aws-config-20261024$ export BACKUP_BUCKET=eks-backups-$ACCOUNT-$REGION
+ubuntu@EKSClient:~/eks-backups/aws-config-20261024$ aws s3 mb s3://$BACKUP_BUCKET --region $REGION
+make_bucket: eks-backups-003344631245-us-east-1
+ubuntu@EKSClient:~/eks-backups/aws-config-20261024$ aws s3 sync ~/eks-backups s3://$BACKUP_BUCKET/$CLUSTER/
+upload: ./addons.json to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024/addons.json
+upload: ./eksctl-cluster.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024/eksctl-cluster.yaml
+upload: ./kubectl-version.txt to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024/kubectl-version.txt
+upload: ./nodegroups-list.json to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024/nodegroups-list.json
+upload: ./nodegroup.json to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024/nodegroup.json
+upload: ./cluster.json to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024/cluster.json
+upload: ./nodes.txt to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024/nodes.txt
+upload: ../k8s-backup-20261024-040705.tar.gz to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705.tar.gz
+upload: ./eksctl-nodegroup.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024/eksctl-nodegroup.yaml
+upload: ../backup-k8s.sh to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/backup-k8s.sh
+upload: ../k8s-backup-20261024-040705/cluster-scoped/certificatesigningrequests.certificates.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/certificatesigningrequests.certificates.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/apiservices.apiregistration.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/apiservices.apiregistration.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/clusterrolebindings.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/clusterrolebindings.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/clusterroles.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/clusterroles.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/cninodes.vpcresources.k8s.aws.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/cninodes.vpcresources.k8s.aws.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/csidrivers.storage.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/csidrivers.storage.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/flowschemas.flowcontrol.apiserver.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/flowschemas.flowcontrol.apiserver.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/csinodes.storage.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/csinodes.storage.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/customresourcedefinitions.apiextensions.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/customresourcedefinitions.apiextensions.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/ipaddresses.networking.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/ipaddresses.networking.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/mutatingwebhookconfigurations.admissionregistration.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/mutatingwebhookconfigurations.admissionregistration.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/nodes.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/nodes.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/servicecidrs.networking.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/servicecidrs.networking.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/namespaces.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/namespaces.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/prioritylevelconfigurations.flowcontrol.apiserver.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/prioritylevelconfigurations.flowcontrol.apiserver.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/priorityclasses.scheduling.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/priorityclasses.scheduling.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/storageclasses.storage.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/storageclasses.storage.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/default/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/default/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/validatingwebhookconfigurations.admissionregistration.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/validatingwebhookconfigurations.admissionregistration.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/demo/services.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/demo/services.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/default/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/default/configmaps.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/demo/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/demo/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-040705/cluster-scoped/nodes.metrics.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/cluster-scoped/nodes.metrics.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/demo/replicasets.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/demo/replicasets.apps.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/default/services.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/default/services.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/demo/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/demo/configmaps.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/demo/pods.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/demo/pods.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/demo/deployments.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/demo/deployments.apps.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/demo/pods.metrics.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/demo/pods.metrics.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-node-lease/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-node-lease/configmaps.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-node-lease/leases.coordination.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-node-lease/leases.coordination.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-node-lease/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-node-lease/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-public/roles.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-public/roles.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-public/rolebindings.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-public/rolebindings.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-public/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-public/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-system/services.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-system/services.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-system/roles.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-system/roles.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-public/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-public/configmaps.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-system/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-system/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-system/replicasets.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-system/replicasets.apps.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-system/rolebindings.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-system/rolebindings.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-system/pods.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-system/pods.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-system/pods.metrics.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-system/pods.metrics.k8s.io.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-system/poddisruptionbudgets.policy.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-system/poddisruptionbudgets.policy.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-system/controllerrevisions.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-system/controllerrevisions.apps.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-system/daemonsets.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-system/daemonsets.apps.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-system/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-system/configmaps.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-system/deployments.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-system/deployments.apps.yaml
+upload: ../k8s-backup-20261024-040705/namespaced/kube-system/leases.coordination.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-040705/namespaced/kube-system/leases.coordination.k8s.io.yaml
+ubuntu@EKSClient:~/eks-backups/aws-config-20261024$
+ubuntu@EKSClient:~/eks-backups/aws-config-20261024$ aws s3 ls s3://$BACKUP_BUCKET/$CLUSTER/ --recursive | head
+2026-10-24 04:16:13        111 my-eks-cluster/aws-config-20261024/addons.json
+2026-10-24 04:16:13       5650 my-eks-cluster/aws-config-20261024/cluster.json
+2026-10-24 04:16:13       4383 my-eks-cluster/aws-config-20261024/eksctl-cluster.yaml
+2026-10-24 04:16:13        509 my-eks-cluster/aws-config-20261024/eksctl-nodegroup.yaml
+2026-10-24 04:16:13         87 my-eks-cluster/aws-config-20261024/kubectl-version.txt
+2026-10-24 04:16:13       2311 my-eks-cluster/aws-config-20261024/nodegroup.json
+2026-10-24 04:16:13         55 my-eks-cluster/aws-config-20261024/nodegroups-list.json
+2026-10-24 04:16:13        606 my-eks-cluster/aws-config-20261024/nodes.txt
+2026-10-24 04:16:13       1241 my-eks-cluster/backup-k8s.sh
+2026-10-24 04:16:13      78435 my-eks-cluster/k8s-backup-20261024-040705.tar.gz
+
+aws: [ERROR]: [Errno 32] Broken pipe
+Exception ignored while flushing sys.stdout:
+BrokenPipeError: [Errno 32] Broken pipe
+ubuntu@EKSClient:~/eks-backups/aws-config-20261024$
+ubuntu@EKSClient:~$ aws eks list-insights \
+  --cluster-name $CLUSTER \
+  --region $REGION \
+  --filter kubernetesVersions=1.35 \
+  --query "insights[].{Name:name,Status:insightStatus.status}" \
+  --output table
+-------------------------------------------------
+|                 ListInsights                  |
++------------------------------------+----------+
+|                Name                | Status   |
++------------------------------------+----------+
+|  kube-proxy version skew           |  PASSING |
+|  Cluster health issues             |  PASSING |
+|  Kubelet version skew              |  PASSING |
+|  EKS add-on version compatibility  |  UNKNOWN |
+|  Amazon Linux 2 compatibility      |  PASSING |
++------------------------------------+----------+
+ubuntu@EKSClient:~$
+
+ubuntu@ip-172-31-30-166:~$ eksctl get addon --cluster $CLUSTER --region $REGION
+2026-10-24 04:23:29 [ℹ]  Kubernetes version "1.34" in use by cluster "my-eks-cluster"
+2026-10-24 04:23:29 [ℹ]  getting all addons
+2026-10-24 04:23:30 [ℹ]  to see issues for an addon run `eksctl get addon --name <addon-name> --cluster <cluster-name>`
+NAME            VERSION                 STATUS  ISSUES  IAMROLE UPDATE AVAILABLE                                                                 CONFIGURATION VALUES     NAMESPACE       POD IDENTITY ASSOCIATION ROLES
+coredns         v1.12.4-eksbuild.58     ACTIVE  0               v1.13.2-eksbuild.59,v1.13.2-eksbuild.51,v1.13.2-eksbuild.50,v1.13.2-eksbuild.31,v1.13.2-eksbuild.30,v1.13.2-eksbuild.24,v1.13.2-eksbuild.21,v1.13.2-eksbuild.17,v1.13.2-eksbuild.11,v1.13.2-eksbuild.10,v1.13.2-eksbuild.7,v1.13.2-eksbuild.4,v1.13.2-eksbuild.3,v1.13.2-eksbuild.1,v1.13.1-eksbuild.1,v1.12.4-eksbuild.66                          kube-system
+kube-proxy      v1.34.6-eksbuild.52     ACTIVE  0               v1.34.6-eksbuild.59                                                              kube-system
+metrics-server  v0.9.0-eksbuild.14      ACTIVE  0                                                                                                kube-system
+vpc-cni         v1.22.4-eksbuild.3      ACTIVE  0               v1.23.2-eksbuild.6,v1.23.2-eksbuild.4,v1.23.2-eksbuild.3,v1.23.2-eksbuild.1,v1.23.1-eksbuild.1,v1.23.0-eksbuild.1,v1.22.4-eksbuild.8,v1.22.4-eksbuild.6,v1.22.4-eksbuild.5                                                         kube-system
+ubuntu@ip-172-31-30-166:~$
+ubuntu@ip-172-31-30-166:~$ aws eks describe-insight \
+  --cluster-name $CLUSTER \
+  --region $REGION \
+  --id 88f7d638-d4bf-4963-a674-10c185ac1d36
+{
+    "insight": {
+        "id": "88f7d638-d4bf-4963-a674-10c185ac1d36",
+        "name": "EKS add-on version compatibility",
+        "category": "UPGRADE_READINESS",
+        "kubernetesVersion": "1.35",
+        "lastRefreshTime": "2026-10-24T03:59:19+00:00",
+        "lastTransitionTime": "2026-10-24T03:59:19+00:00",
+        "description": "Checks version of installed EKS add-ons to ensure they are compatible with the next version of Kubernetes. ",
+        "insightStatus": {
+            "status": "UNKNOWN",
+            "reason": "Unable to determine version compatibility of EKS add-ons."
+        },
+        "recommendation": "Upgrade your EKS add-on to a newer version compatible with the next Kubernetes version.",
+        "additionalInfo": {
+            "Updating an EKS add-on": "https://docs.aws.amazon.com/eks/latest/userguide/managing-add-ons.html#updating-an-add-on"
+        },
+        "resources": [
+            {
+                "insightStatus": {
+                    "status": "UNKNOWN",
+                    "reason": "Unable to determine addon compatibility: addon 'coredns' is in 'DEGRADED' state."
+                },
+                "arn": "arn:aws:eks:us-east-1:003344631245:addon/my-eks-cluster/coredns/96d0b605-b5ff-7d90-2647-8143da9a886d"
+            },
+            {
+                "insightStatus": {
+                    "status": "PASSING",
+                    "reason": "All installed EKS add-on versions are compatible with next Kubernetes version."
+                },
+                "arn": "arn:aws:eks:us-east-1:003344631245:addon/my-eks-cluster/kube-proxy/cad0b605-b4f9-cd73-2b31-0bc7d0ec58cb"
+            },
+            {
+                "insightStatus": {
+                    "status": "PASSING",
+                    "reason": "All installed EKS add-on versions are compatible with next Kubernetes version."
+                },
+                "arn": "arn:aws:eks:us-east-1:003344631245:addon/my-eks-cluster/vpc-cni/e0d0b605-b3f6-c76f-f884-2d910a1e6ea6"
+            }
+        ],
+        "categorySpecificSummary": {
+            "deprecationDetails": [],
+            "addonCompatibilityDetails": [
+                {
+                    "name": "kube-proxy",
+                    "compatibleVersions": [
+                        "v1.34.6-eksbuild.52",
+                        "v1.34.6-eksbuild.59",
+                        "v1.35.0-eksbuild.2",
+                        "v1.35.2-eksbuild.4",
+                        "v1.35.3-eksbuild.2",
+                        "v1.35.3-eksbuild.5",
+                        "v1.35.3-eksbuild.8",
+                        "v1.35.3-eksbuild.11",
+                        "v1.35.3-eksbuild.13",
+                        "v1.35.3-eksbuild.17",
+                        "v1.35.3-eksbuild.18",
+                        "v1.35.3-eksbuild.19",
+                        "v1.35.3-eksbuild.21",
+                        "v1.35.3-eksbuild.25",
+                        "v1.35.3-eksbuild.29",
+                        "v1.35.3-eksbuild.49",
+                        "v1.35.3-eksbuild.50",
+                        "v1.35.3-eksbuild.52",
+                        "v1.35.3-eksbuild.59"
+                    ]
+                },
+                {
+                    "name": "vpc-cni",
+                    "compatibleVersions": [
+                        "v1.22.4-eksbuild.3",
+                        "v1.22.4-eksbuild.5",
+                        "v1.22.4-eksbuild.6",
+                        "v1.22.4-eksbuild.8",
+                        "v1.23.0-eksbuild.1",
+                        "v1.23.1-eksbuild.1",
+                        "v1.23.2-eksbuild.1",
+                        "v1.23.2-eksbuild.3",
+                        "v1.23.2-eksbuild.4",
+                        "v1.23.2-eksbuild.6"
+                    ]
+                }
+            ]
+        }
+    }
+}
+ubuntu@ip-172-31-30-166:~$
+ubuntu@ip-172-31-30-166:~$ aws eks describe-addon \
+  --cluster-name $CLUSTER \
+  --addon-name coredns \
+  --region $REGION
+{
+    "addon": {
+        "addonName": "coredns",
+        "clusterName": "my-eks-cluster",
+        "status": "ACTIVE",
+        "addonVersion": "v1.12.4-eksbuild.58",
+        "health": {
+            "issues": []
+        },
+        "addonArn": "arn:aws:eks:us-east-1:003344631245:addon/my-eks-cluster/coredns/96d0b605-b5ff-7d90-2647-8143da9a886d",
+        "createdAt": "2026-10-24T03:54:10.482000+00:00",
+        "modifiedAt": "2026-10-24T04:00:13.116000+00:00",
+        "tags": {},
+        "namespaceConfig": {
+            "namespace": "kube-system"
+        }
+    }
+}
+ubuntu@ip-172-31-30-166:~$ aws eks describe-addon-versions \
+  --addon-name coredns \
+  --kubernetes-version 1.35 \
+  --region $REGION >> output
+  
+ubuntu@ip-172-31-30-166:~$ kubectl -n kube-system get pods -l k8s-app=kube-dns -o wide
+NAME                       READY   STATUS    RESTARTS   AGE   IP               NODE                            NOMINATED NODE   READINESS GATES
+coredns-7879986bf8-7sqmx   1/1     Running   0          31m   192.168.3.73     ip-192-168-21-69.ec2.internal   <none>           <none>
+coredns-7879986bf8-j2kn4   1/1     Running   0          31m   192.168.14.244   ip-192-168-21-69.ec2.internal   <none>           <none>
+
+ubuntu@EKSClient:~$ aws eks list-addons --cluster-name $CLUSTER --region $REGION
+{
+    "addons": [
+        "coredns",
+        "kube-proxy",
+        "metrics-server",
+        "vpc-cni"
+    ]
+}
+ubuntu@EKSClient:~$ # What's running now
+kubectl get pods -n kube-system -o wide
+kubectl get ds aws-node kube-proxy -n kube-system \
+  -o jsonpath='{range .items[*]}{.metadata.name}{"  "}{.spec.template.spec.containers[0].image}{"\n"}{end}'
+kubectl get deploy coredns -n kube-system \
+  -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+
+# What's compatible with 1.35
+for ADDON in kube-proxy vpc-cni coredns; do
+  echo "=== $ADDON ==="
+  aws eks describe-addon-versions --addon-name $ADDON --kubernetes-version 1.35 --region $REGION \
+    --query "addons[0].addonVersions[].{Version:addonVersion,Default:compatibilities[0].defaultVersion}" --output table
+done
+NAME                              READY   STATUS    RESTARTS   AGE   IP               NODE                            NOMINATED NODE   READINESS GATES
+aws-node-rmql9                    2/2     Running   0          38m   192.168.21.69    ip-192-168-21-69.ec2.internal   <none>           <none>
+aws-node-s7wxr                    2/2     Running   0          38m   192.168.44.47    ip-192-168-44-47.ec2.internal   <none>           <none>
+coredns-7879986bf8-7sqmx          1/1     Running   0          41m   192.168.3.73     ip-192-168-21-69.ec2.internal   <none>           <none>
+coredns-7879986bf8-j2kn4          1/1     Running   0          41m   192.168.14.244   ip-192-168-21-69.ec2.internal   <none>           <none>
+kube-proxy-jm6tg                  1/1     Running   0          38m   192.168.44.47    ip-192-168-44-47.ec2.internal   <none>           <none>
+kube-proxy-zk6f4                  1/1     Running   0          38m   192.168.21.69    ip-192-168-21-69.ec2.internal   <none>           <none>
+metrics-server-68c65f79d8-8lcjw   1/1     Running   0          36m   192.168.11.57    ip-192-168-21-69.ec2.internal   <none>           <none>
+metrics-server-68c65f79d8-wttv2   1/1     Running   0          36m   192.168.46.179   ip-192-168-44-47.ec2.internal   <none>           <none>
+aws-node  602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon-k8s-cni:v1.22.4-eksbuild.3
+kube-proxy  602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/kube-proxy:v1.34.6-eksbuild.52
+602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.12.4-eksbuild.58
+=== kube-proxy ===
+-------------------------------------
+|       DescribeAddonVersions       |
++----------+------------------------+
+|  Default |        Version         |
++----------+------------------------+
+|  False   |  v1.35.3-eksbuild.59   |
+|  True    |  v1.35.3-eksbuild.52   |
+|  False   |  v1.35.3-eksbuild.50   |
+|  False   |  v1.35.3-eksbuild.49   |
+|  False   |  v1.35.3-eksbuild.29   |
+|  False   |  v1.35.3-eksbuild.25   |
+|  False   |  v1.35.3-eksbuild.21   |
+|  False   |  v1.35.3-eksbuild.19   |
+|  False   |  v1.35.3-eksbuild.18   |
+|  False   |  v1.35.3-eksbuild.17   |
+|  False   |  v1.35.3-eksbuild.13   |
+|  False   |  v1.35.3-eksbuild.11   |
+|  False   |  v1.35.3-eksbuild.8    |
+|  False   |  v1.35.3-eksbuild.5    |
+|  False   |  v1.35.3-eksbuild.2    |
+|  False   |  v1.35.2-eksbuild.4    |
+|  False   |  v1.35.0-eksbuild.2    |
+|  False   |  v1.34.6-eksbuild.59   |
+|  False   |  v1.34.6-eksbuild.52   |
+|  False   |  v1.34.6-eksbuild.50   |
+|  False   |  v1.34.6-eksbuild.49   |
+|  False   |  v1.34.6-eksbuild.29   |
+|  False   |  v1.34.6-eksbuild.25   |
+|  False   |  v1.34.6-eksbuild.21   |
+|  False   |  v1.34.6-eksbuild.19   |
+|  False   |  v1.34.6-eksbuild.18   |
+|  False   |  v1.34.6-eksbuild.17   |
+|  False   |  v1.34.6-eksbuild.13   |
+|  False   |  v1.34.6-eksbuild.11   |
+|  False   |  v1.34.6-eksbuild.8    |
+|  False   |  v1.34.6-eksbuild.5    |
+|  False   |  v1.34.6-eksbuild.2    |
+|  False   |  v1.34.5-eksbuild.2    |
+|  False   |  v1.34.3-eksbuild.5    |
+|  False   |  v1.34.3-eksbuild.2    |
+|  False   |  v1.34.1-eksbuild.2    |
+|  False   |  v1.34.0-eksbuild.4    |
+|  False   |  v1.34.0-eksbuild.2    |
+|  False   |  v1.33.10-eksbuild.59  |
+|  False   |  v1.33.10-eksbuild.52  |
+|  False   |  v1.33.10-eksbuild.50  |
+|  False   |  v1.33.10-eksbuild.49  |
+|  False   |  v1.33.10-eksbuild.29  |
+|  False   |  v1.33.10-eksbuild.25  |
+|  False   |  v1.33.10-eksbuild.21  |
+|  False   |  v1.33.10-eksbuild.19  |
+|  False   |  v1.33.10-eksbuild.18  |
+|  False   |  v1.33.10-eksbuild.17  |
+|  False   |  v1.33.10-eksbuild.13  |
+|  False   |  v1.33.10-eksbuild.11  |
+|  False   |  v1.33.10-eksbuild.8   |
+|  False   |  v1.33.10-eksbuild.5   |
+|  False   |  v1.33.10-eksbuild.2   |
+|  False   |  v1.33.9-eksbuild.2    |
+|  False   |  v1.33.8-eksbuild.4    |
+|  False   |  v1.33.7-eksbuild.2    |
+|  False   |  v1.33.5-eksbuild.2    |
+|  False   |  v1.33.3-eksbuild.10   |
+|  False   |  v1.33.3-eksbuild.6    |
+|  False   |  v1.33.3-eksbuild.4    |
+|  False   |  v1.33.0-eksbuild.2    |
+|  False   |  v1.32.13-eksbuild.62  |
+|  False   |  v1.32.13-eksbuild.55  |
+|  False   |  v1.32.13-eksbuild.53  |
+|  False   |  v1.32.13-eksbuild.52  |
+|  False   |  v1.32.13-eksbuild.32  |
+|  False   |  v1.32.13-eksbuild.28  |
+|  False   |  v1.32.13-eksbuild.24  |
+|  False   |  v1.32.13-eksbuild.22  |
+|  False   |  v1.32.13-eksbuild.21  |
+|  False   |  v1.32.13-eksbuild.20  |
+|  False   |  v1.32.13-eksbuild.16  |
+|  False   |  v1.32.13-eksbuild.14  |
+|  False   |  v1.32.13-eksbuild.11  |
+|  False   |  v1.32.13-eksbuild.8   |
+|  False   |  v1.32.13-eksbuild.5   |
+|  False   |  v1.32.13-eksbuild.2   |
+|  False   |  v1.32.11-eksbuild.5   |
+|  False   |  v1.32.11-eksbuild.2   |
+|  False   |  v1.32.9-eksbuild.2    |
+|  False   |  v1.32.6-eksbuild.12   |
+|  False   |  v1.32.6-eksbuild.8    |
+|  False   |  v1.32.6-eksbuild.6    |
+|  False   |  v1.32.6-eksbuild.2    |
+|  False   |  v1.32.5-eksbuild.2    |
+|  False   |  v1.32.3-eksbuild.7    |
+|  False   |  v1.32.3-eksbuild.2    |
+|  False   |  v1.32.0-eksbuild.2    |
++----------+------------------------+
+=== vpc-cni ===
+-----------------------------------
+|      DescribeAddonVersions      |
++----------+----------------------+
+|  Default |       Version        |
++----------+----------------------+
+|  False   |  v1.23.2-eksbuild.6  |
+|  False   |  v1.23.2-eksbuild.4  |
+|  False   |  v1.23.2-eksbuild.3  |
+|  False   |  v1.23.2-eksbuild.1  |
+|  False   |  v1.23.1-eksbuild.1  |
+|  False   |  v1.23.0-eksbuild.1  |
+|  False   |  v1.22.4-eksbuild.8  |
+|  False   |  v1.22.4-eksbuild.6  |
+|  False   |  v1.22.4-eksbuild.5  |
+|  True    |  v1.22.4-eksbuild.3  |
+|  False   |  v1.22.3-eksbuild.1  |
+|  False   |  v1.22.2-eksbuild.1  |
+|  False   |  v1.22.1-eksbuild.2  |
+|  False   |  v1.21.2-eksbuild.2  |
+|  False   |  v1.21.1-eksbuild.8  |
+|  False   |  v1.21.1-eksbuild.7  |
+|  False   |  v1.21.1-eksbuild.5  |
+|  False   |  v1.21.1-eksbuild.3  |
+|  False   |  v1.21.1-eksbuild.1  |
+|  False   |  v1.21.0-eksbuild.4  |
+|  False   |  v1.20.5-eksbuild.1  |
+|  False   |  v1.20.4-eksbuild.3  |
+|  False   |  v1.20.4-eksbuild.2  |
+|  False   |  v1.20.4-eksbuild.1  |
+|  False   |  v1.20.3-eksbuild.1  |
+|  False   |  v1.20.2-eksbuild.1  |
+|  False   |  v1.20.1-eksbuild.3  |
+|  False   |  v1.20.1-eksbuild.1  |
+|  False   |  v1.20.0-eksbuild.1  |
+|  False   |  v1.19.6-eksbuild.7  |
+|  False   |  v1.19.6-eksbuild.1  |
+|  False   |  v1.19.5-eksbuild.3  |
+|  False   |  v1.19.5-eksbuild.1  |
+|  False   |  v1.19.4-eksbuild.1  |
+|  False   |  v1.19.3-eksbuild.1  |
+|  False   |  v1.19.2-eksbuild.5  |
+|  False   |  v1.19.2-eksbuild.1  |
+|  False   |  v1.19.0-eksbuild.1  |
++----------+----------------------+
+=== coredns ===
+------------------------------------
+|       DescribeAddonVersions      |
++----------+-----------------------+
+|  Default |        Version        |
++----------+-----------------------+
+|  False   |  v1.14.7-eksbuild.19  |
+|  False   |  v1.14.7-eksbuild.11  |
+|  False   |  v1.14.7-eksbuild.10  |
+|  False   |  v1.14.6-eksbuild.4   |
+|  False   |  v1.14.3-eksbuild.23  |
+|  False   |  v1.14.3-eksbuild.22  |
+|  False   |  v1.14.3-eksbuild.16  |
+|  False   |  v1.14.3-eksbuild.14  |
+|  False   |  v1.14.3-eksbuild.9   |
+|  False   |  v1.14.3-eksbuild.3   |
+|  False   |  v1.14.3-eksbuild.2   |
+|  False   |  v1.14.2-eksbuild.4   |
+|  False   |  v1.13.2-eksbuild.59  |
+|  True    |  v1.13.2-eksbuild.51  |
+|  False   |  v1.13.2-eksbuild.50  |
+|  False   |  v1.13.2-eksbuild.31  |
+|  False   |  v1.13.2-eksbuild.30  |
+|  False   |  v1.13.2-eksbuild.24  |
+|  False   |  v1.13.2-eksbuild.21  |
+|  False   |  v1.13.2-eksbuild.17  |
+|  False   |  v1.13.2-eksbuild.11  |
+|  False   |  v1.13.2-eksbuild.10  |
+|  False   |  v1.13.2-eksbuild.7   |
+|  False   |  v1.13.2-eksbuild.4   |
+|  False   |  v1.13.2-eksbuild.3   |
+|  False   |  v1.13.2-eksbuild.1   |
+|  False   |  v1.13.1-eksbuild.1   |
+|  False   |  v1.12.4-eksbuild.66  |
+|  False   |  v1.12.4-eksbuild.58  |
+|  False   |  v1.12.4-eksbuild.57  |
+|  False   |  v1.12.4-eksbuild.38  |
+|  False   |  v1.12.4-eksbuild.37  |
+|  False   |  v1.12.4-eksbuild.31  |
+|  False   |  v1.12.4-eksbuild.29  |
+|  False   |  v1.12.4-eksbuild.24  |
+|  False   |  v1.12.4-eksbuild.18  |
+|  False   |  v1.12.4-eksbuild.17  |
+|  False   |  v1.12.4-eksbuild.14  |
+|  False   |  v1.12.4-eksbuild.11  |
+|  False   |  v1.12.4-eksbuild.10  |
+|  False   |  v1.12.4-eksbuild.6   |
+|  False   |  v1.12.4-eksbuild.1   |
+|  False   |  v1.12.3-eksbuild.1   |
+|  False   |  v1.12.2-eksbuild.4   |
+|  False   |  v1.12.2-eksbuild.1   |
+|  False   |  v1.12.1-eksbuild.2   |
++----------+-----------------------+
+ubuntu@EKSClient:~$
+ubuntu@EKSClient:~$ aws eks describe-addon-versions --addon-name metrics-server --kubernetes-version 1.35 --region $REGION \
+  --query "addons[0].addonVersions[].{Version:addonVersion,Default:compatibilities[0].defaultVersion}" --output table
+aws eks describe-addon --cluster-name $CLUSTER --addon-name metrics-server --region $REGION --query "addon.addonVersion" --output text
+-----------------------------------
+|      DescribeAddonVersions      |
++----------+----------------------+
+|  Default |       Version        |
++----------+----------------------+
+|  True    |  v0.9.0-eksbuild.14  |
+|  False   |  v0.9.0-eksbuild.13  |
+|  False   |  v0.9.0-eksbuild.12  |
+|  False   |  v0.9.0-eksbuild.11  |
+|  False   |  v0.9.0-eksbuild.10  |
+|  False   |  v0.9.0-eksbuild.9   |
+|  False   |  v0.9.0-eksbuild.8   |
+|  False   |  v0.9.0-eksbuild.7   |
+|  False   |  v0.9.0-eksbuild.6   |
+|  False   |  v0.9.0-eksbuild.5   |
+|  False   |  v0.9.0-eksbuild.4   |
+|  False   |  v0.9.0-eksbuild.2   |
+|  False   |  v0.9.0-eksbuild.1   |
+|  False   |  v0.8.1-eksbuild.22  |
+|  False   |  v0.8.1-eksbuild.21  |
+|  False   |  v0.8.1-eksbuild.20  |
+|  False   |  v0.8.1-eksbuild.19  |
+|  False   |  v0.8.1-eksbuild.18  |
+|  False   |  v0.8.1-eksbuild.17  |
+|  False   |  v0.8.1-eksbuild.16  |
+|  False   |  v0.8.1-eksbuild.15  |
+|  False   |  v0.8.1-eksbuild.14  |
+|  False   |  v0.8.1-eksbuild.13  |
+|  False   |  v0.8.1-eksbuild.12  |
+|  False   |  v0.8.1-eksbuild.11  |
+|  False   |  v0.8.1-eksbuild.10  |
+|  False   |  v0.8.1-eksbuild.6   |
+|  False   |  v0.8.1-eksbuild.5   |
+|  False   |  v0.8.1-eksbuild.4   |
+|  False   |  v0.8.1-eksbuild.2   |
+|  False   |  v0.8.1-eksbuild.1   |
+|  False   |  v0.8.0-eksbuild.6   |
+|  False   |  v0.8.0-eksbuild.5   |
+|  False   |  v0.8.0-eksbuild.3   |
+|  False   |  v0.8.0-eksbuild.2   |
+|  False   |  v0.8.0-eksbuild.1   |
+|  False   |  v0.7.2-eksbuild.18  |
+|  False   |  v0.7.2-eksbuild.16  |
+|  False   |  v0.7.2-eksbuild.12  |
+|  False   |  v0.7.2-eksbuild.11  |
+|  False   |  v0.7.2-eksbuild.10  |
+|  False   |  v0.7.2-eksbuild.9   |
+|  False   |  v0.7.2-eksbuild.8   |
+|  False   |  v0.7.2-eksbuild.7   |
+|  False   |  v0.7.2-eksbuild.6   |
+|  False   |  v0.7.2-eksbuild.4   |
+|  False   |  v0.7.2-eksbuild.3   |
+|  False   |  v0.7.2-eksbuild.2   |
+|  False   |  v0.7.2-eksbuild.1   |
++----------+----------------------+
+v0.9.0-eksbuild.14
+ubuntu@ip-172-31-30-166:~$ ~/eks-backups/backup-k8s.sh
+>> Backing up cluster-scoped resources...
+>> Backing up namespaced resources...
+   namespace default done
+   namespace demo done
+   namespace kube-node-lease done
+   namespace kube-public done
+   namespace kube-system done
+>> DONE. Backup folder : /home/ubuntu/eks-backups/k8s-backup-20261024-044438
+>> DONE. Backup archive: /home/ubuntu/eks-backups/k8s-backup-20261024-044438.tar.gz
+ubuntu@ip-172-31-30-166:~$ aws eks describe-cluster \
+  --name $CLUSTER \
+  --region $REGION \
+  --query "cluster.resourcesVpcConfig.subnetIds" \
+  --output text
+subnet-0e604f10e54310afe        subnet-0d6dfff475c3b3505        subnet-023ccf2e8d65c1bb3        subnet-090dda8dd8d32480f
+ubuntu@ip-172-31-30-166:~$ aws ec2 describe-subnets \
+ubuntu@ip-172-31-30-166:~$ aws ec2 describe-subnets \
+  --subnet-ids subnet-0e604f10e54310afe subnet-0d6dfff475c3b3505  subnet-023ccf2e8d65c1bb3 subnet-090dda8dd8d32480f \
+  --query "Subnets[].{Subnet:SubnetId,AZ:AvailabilityZone,AvailableIPs:AvailableIpAddressCount}" \
+  --output table
+------------------------------------------------------------
+|                      DescribeSubnets                     |
++------------+----------------+----------------------------+
+|     AZ     | AvailableIPs   |          Subnet            |
++------------+----------------+----------------------------+
+|  us-east-1f|  8174          |  subnet-0e604f10e54310afe  |
+|  us-east-1d|  8175          |  subnet-0d6dfff475c3b3505  |
+|  us-east-1d|  8186          |  subnet-090dda8dd8d32480f  |
+|  us-east-1f|  8186          |  subnet-023ccf2e8d65c1bb3  |
++------------+----------------+----------------------------+
+ubuntu@ip-172-31-30-166:~$ aws eks describe-nodegroup \
+  --cluster-name $CLUSTER \
+  --nodegroup-name $NODEGROUP \
+  --region $REGION \
+  --query "nodegroup.scalingConfig" \
+  --output table
+---------------------------------------
+|          DescribeNodegroup          |
++-------------+-----------+-----------+
+| desiredSize |  maxSize  |  minSize  |
++-------------+-----------+-----------+
+|  2          |  2        |  2        |
++-------------+-----------+-----------+
+ubuntu@ip-172-31-30-166:~$
+ubuntu@ip-172-31-30-166:~$ aws service-quotas get-service-quota --service-code ec2 --quota-code L-1216C47A \
+  --region $REGION --query "Quota.Value" --output text
+16.0
+ubuntu@ip-172-31-30-166:~$ eksctl upgrade cluster --name $CLUSTER --region $REGION --version $TARGET --approve
+2026-10-24 04:53:46 [ℹ]  will upgrade cluster "my-eks-cluster" control plane from current version "1.34" to "1.35"
+2026-10-24 05:01:14 [✔]  cluster "my-eks-cluster" control plane has been upgraded to version "1.35"
+2026-10-24 05:01:14 [ℹ]  you will need to follow the upgrade procedure for all of nodegroups and add-ons
+2026-10-24 05:01:14 [ℹ]  re-building cluster stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 05:01:14 [✔]  all resources in cluster stack "eksctl-my-eks-cluster-cluster" are up-to-date
+2026-10-24 05:01:14 [ℹ]  checking security group configuration for all nodegroups
+2026-10-24 05:01:14 [ℹ]  all nodegroups have up-to-date cloudformation templates
+ubuntu@ip-172-31-30-166:~$ aws eks describe-cluster --name $CLUSTER --region $REGION --query "cluster.{Version:version,Status:status}" --output text
+ACTIVE  1.35
+ubuntu@ip-172-31-30-166:~$
+ubuntu@EKSClient:~$ eksctl get addon --cluster $CLUSTER --region $REGION
+2026-10-24 05:08:14 [ℹ]  Kubernetes version "1.35" in use by cluster "my-eks-cluster"
+2026-10-24 05:08:14 [ℹ]  getting all addons
+2026-10-24 05:08:16 [ℹ]  to see issues for an addon run `eksctl get addon --name <addon-name> --cluster <cluster-name>`
+NAME            VERSION                 STATUS  ISSUES  IAMROLE UPDATE AVAILABLE                                                                 CONFIGURATION VALUES     NAMESPACE       POD IDENTITY ASSOCIATION ROLES
+coredns         v1.12.4-eksbuild.58     ACTIVE  0               v1.14.7-eksbuild.19,v1.14.7-eksbuild.11,v1.14.7-eksbuild.10,v1.14.6-eksbuild.4,v1.14.3-eksbuild.23,v1.14.3-eksbuild.22,v1.14.3-eksbuild.16,v1.14.3-eksbuild.14,v1.14.3-eksbuild.9,v1.14.3-eksbuild.3,v1.14.3-eksbuild.2,v1.14.2-eksbuild.4,v1.13.2-eksbuild.59,v1.13.2-eksbuild.51,v1.13.2-eksbuild.50,v1.13.2-eksbuild.31,v1.13.2-eksbuild.30,v1.13.2-eksbuild.24,v1.13.2-eksbuild.21,v1.13.2-eksbuild.17,v1.13.2-eksbuild.11,v1.13.2-eksbuild.10,v1.13.2-eksbuild.7,v1.13.2-eksbuild.4,v1.13.2-eksbuild.3,v1.13.2-eksbuild.1,v1.13.1-eksbuild.1,v1.12.4-eksbuild.66                           kube-system
+kube-proxy      v1.34.6-eksbuild.52     ACTIVE  0               v1.35.3-eksbuild.59,v1.35.3-eksbuild.52,v1.35.3-eksbuild.50,v1.35.3-eksbuild.49,v1.35.3-eksbuild.29,v1.35.3-eksbuild.25,v1.35.3-eksbuild.21,v1.35.3-eksbuild.19,v1.35.3-eksbuild.18,v1.35.3-eksbuild.17,v1.35.3-eksbuild.13,v1.35.3-eksbuild.11,v1.35.3-eksbuild.8,v1.35.3-eksbuild.5,v1.35.3-eksbuild.2,v1.35.2-eksbuild.4,v1.35.0-eksbuild.2,v1.34.6-eksbuild.59                   kube-system
+metrics-server  v0.9.0-eksbuild.14      ACTIVE  0                                                                                                kube-system
+vpc-cni         v1.22.4-eksbuild.3      ACTIVE  0               v1.23.2-eksbuild.6,v1.23.2-eksbuild.4,v1.23.2-eksbuild.3,v1.23.2-eksbuild.1,v1.23.1-eksbuild.1,v1.23.0-eksbuild.1,v1.22.4-eksbuild.8,v1.22.4-eksbuild.6,v1.22.4-eksbuild.5                                                         kube-system
+ubuntu@EKSClient:~$
+ubuntu@ip-172-31-30-166:~$ kubectl version
+Client Version: v1.37.1
+Kustomize Version: v5.8.1
+Server Version: v1.35.8-eks-b9510e3
+Warning: version difference between client (1.37) and server (1.35) exceeds the supported minor version skew of +/-1
+ubuntu@ip-172-31-30-166:~$ kubectl get nodes
+NAME                            STATUS   ROLES    AGE   VERSION
+ip-192-168-21-69.ec2.internal   Ready    <none>   64m   v1.34.12-eks-117f323
+ip-192-168-44-47.ec2.internal   Ready    <none>   64m   v1.34.12-eks-117f323
+ubuntu@ip-172-31-30-166:~$ kubectl get pods -A | grep -v -E "Running|Completed"
+NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE
+ubuntu@ip-172-31-30-166:~$
+
+ubuntu@ip-172-31-30-166:~$ eksctl update addon \
+  --name kube-proxy \
+  --cluster $CLUSTER \
+  --region $REGION \
+  --version v1.35.3-eksbuild.52 \
+  --force
+2026-10-24 05:09:48 [!]  no IAM OIDC provider associated with cluster, try 'eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=my-eks-cluster'
+2026-10-24 05:09:49 [ℹ]  Kubernetes version "1.35" in use by cluster "my-eks-cluster"
+2026-10-24 05:09:49 [ℹ]  new version provided v1.35.3-eksbuild.52
+2026-10-24 05:09:49 [ℹ]  updating addon
+2026-10-24 05:10:11 [ℹ]  addon "kube-proxy" active
+ubuntu@ip-172-31-30-166:~$
+ubuntu@ip-172-31-30-166:~$ eksctl update addon \
+  --name vpc-cni \
+  --cluster $CLUSTER \
+  --region $REGION \
+  --version v1.22.4-eksbuild.3 \
+  --force
+2026-10-24 05:12:27 [!]  no IAM OIDC provider associated with cluster, try 'eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=my-eks-cluster'
+2026-10-24 05:12:27 [ℹ]  Kubernetes version "1.35" in use by cluster "my-eks-cluster"
+2026-10-24 05:12:28 [ℹ]  updating addon
+2026-10-24 05:12:38 [ℹ]  addon "vpc-cni" active
+ubuntu@ip-172-31-30-166:~$
+ubuntu@ip-172-31-30-166:~$ eksctl update addon \
+  --name coredns \
+  --cluster $CLUSTER \
+  --region $REGION \
+  --version v1.13.2-eksbuild.51 \
+  --force
+2026-10-24 05:13:13 [!]  no IAM OIDC provider associated with cluster, try 'eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=my-eks-cluster'
+2026-10-24 05:13:13 [ℹ]  Kubernetes version "1.35" in use by cluster "my-eks-cluster"
+2026-10-24 05:13:13 [ℹ]  new version provided v1.13.2-eksbuild.51
+2026-10-24 05:13:13 [ℹ]  updating addon
+ubuntu@ip-172-31-30-166:~$
+ubuntu@ip-172-31-30-166:~$ eksctl get addon --cluster $CLUSTER --region $REGION
+2026-10-24 05:14:59 [ℹ]  Kubernetes version "1.35" in use by cluster "my-eks-cluster"
+2026-10-24 05:14:59 [ℹ]  getting all addons
+2026-10-24 05:15:00 [ℹ]  to see issues for an addon run `eksctl get addon --name <addon-name> --cluster <cluster-name>`
+NAME            VERSION                 STATUS  ISSUES  IAMROLE UPDATE AVAILABLE                                                                 CONFIGURATION VALUES     NAMESPACE       POD IDENTITY ASSOCIATION ROLES
+coredns         v1.13.2-eksbuild.51     ACTIVE  0               v1.14.7-eksbuild.19,v1.14.7-eksbuild.11,v1.14.7-eksbuild.10,v1.14.6-eksbuild.4,v1.14.3-eksbuild.23,v1.14.3-eksbuild.22,v1.14.3-eksbuild.16,v1.14.3-eksbuild.14,v1.14.3-eksbuild.9,v1.14.3-eksbuild.3,v1.14.3-eksbuild.2,v1.14.2-eksbuild.4,v1.13.2-eksbuild.59                              kube-system
+kube-proxy      v1.35.3-eksbuild.52     ACTIVE  0               v1.35.3-eksbuild.59                                                              kube-system
+metrics-server  v0.9.0-eksbuild.14      ACTIVE  0                                                                                                kube-system
+vpc-cni         v1.22.4-eksbuild.3      ACTIVE  0               v1.23.2-eksbuild.6,v1.23.2-eksbuild.4,v1.23.2-eksbuild.3,v1.23.2-eksbuild.1,v1.23.1-eksbuild.1,v1.23.0-eksbuild.1,v1.22.4-eksbuild.8,v1.22.4-eksbuild.6,v1.22.4-eksbuild.5                                                         kube-system
+ubuntu@ip-172-31-30-166:~$
+ubuntu@ip-172-31-30-166:~$ kubectl get pods -n kube-system
+NAME                              READY   STATUS    RESTARTS   AGE
+aws-node-rmql9                    2/2     Running   0          78m
+aws-node-s7wxr                    2/2     Running   0          78m
+coredns-547b59986f-lmlff          1/1     Running   0          2m20s
+coredns-547b59986f-thspj          1/1     Running   0          2m20s
+kube-proxy-j5htq                  1/1     Running   0          5m42s
+kube-proxy-pg7j2                  1/1     Running   0          5m45s
+metrics-server-68c65f79d8-8lcjw   1/1     Running   0          75m
+metrics-server-68c65f79d8-wttv2   1/1     Running   0          75m
+ubuntu@ip-172-31-30-166:~$
+ubuntu@ip-172-31-30-166:~$ kubectl get nodes -w
+NAME                            STATUS   ROLES    AGE   VERSION
+ip-192-168-21-69.ec2.internal   Ready    <none>   79m   v1.34.12-eks-117f323
+ip-192-168-44-47.ec2.internal   Ready    <none>   79m   v1.34.12-eks-117f323
+
+
+ubuntu@ip-172-31-30-166:~$ eksctl upgrade nodegroup \
+  --name $NODEGROUP \
+  --cluster $CLUSTER \
+  --region $REGION \
+  --kubernetes-version $TARGET
+2026-10-24 05:17:54 [ℹ]  setting ForceUpdateEnabled value to false
+2026-10-24 05:17:54 [ℹ]  updating nodegroup stack
+2026-10-24 05:17:54 [ℹ]  waiting for CloudFormation changeset "eksctl-update-nodegroup-1792819074" for stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:18:24 [ℹ]  waiting for CloudFormation changeset "eksctl-update-nodegroup-1792819074" for stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:18:25 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:18:55 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:18:55 [ℹ]  will upgrade nodes to release version: 1.35.9-20261019
+2026-10-24 05:18:55 [ℹ]  upgrading nodegroup version
+2026-10-24 05:18:55 [ℹ]  updating nodegroup stack
+2026-10-24 05:18:55 [ℹ]  waiting for CloudFormation changeset "eksctl-update-nodegroup-1792819135" for stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:19:25 [ℹ]  waiting for CloudFormation changeset "eksctl-update-nodegroup-1792819135" for stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:19:25 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:19:56 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:20:41 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:22:28 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:23:14 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:24:35 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:25:20 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:26:02 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:27:19 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:28:35 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:29:49 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:31:25 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 05:31:25 [ℹ]  nodegroup successfully upgraded
+ubuntu@ip-172-31-30-166:~$ kubectl get nodes
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-5-11.ec2.internal     Ready    <none>   12m   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready    <none>   12m   v1.35.9-eks-117f323
+ubuntu@ip-172-31-30-166:~$
+
+
+###Node behaviour in 2nd terminal
+ubuntu@EKSClient:~$ kubectl get nodes -w
+NAME                            STATUS   ROLES    AGE   VERSION
+ip-192-168-21-69.ec2.internal   Ready    <none>   80m   v1.34.12-eks-117f323
+ip-192-168-44-47.ec2.internal   Ready    <none>   79m   v1.34.12-eks-117f323
+ip-192-168-21-69.ec2.internal   Ready    <none>   80m   v1.34.12-eks-117f323
+ip-192-168-5-11.ec2.internal    NotReady   <none>   0s    v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal    NotReady   <none>   0s    v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal    NotReady   <none>   0s    v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal    NotReady   <none>   0s    v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal    NotReady   <none>   1s    v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal    NotReady   <none>   1s    v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   NotReady   <none>   0s    v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   NotReady   <none>   0s    v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   NotReady   <none>   0s    v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   NotReady   <none>   0s    v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   NotReady   <none>   0s    v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   NotReady   <none>   0s    v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   NotReady   <none>   3s    v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     NotReady   <none>   5s    v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     NotReady   <none>   10s   v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     Ready      <none>   10s   v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     Ready      <none>   10s   v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     Ready      <none>   10s   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   NotReady   <none>   10s   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready      <none>   11s   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready      <none>   11s   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready      <none>   13s   v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     Ready      <none>   16s   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready      <none>   15s   v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     Ready      <none>   30s   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready      <none>   31s   v1.35.9-eks-117f323
+ip-192-168-21-69.ec2.internal    Ready,SchedulingDisabled   <none>   83m   v1.34.12-eks-117f323
+ip-192-168-21-69.ec2.internal    Ready,SchedulingDisabled   <none>   83m   v1.34.12-eks-117f323
+ip-192-168-44-47.ec2.internal    Ready,SchedulingDisabled   <none>   83m   v1.34.12-eks-117f323
+ip-192-168-44-47.ec2.internal    Ready,SchedulingDisabled   <none>   83m   v1.34.12-eks-117f323
+ip-192-168-44-47.ec2.internal    Ready,SchedulingDisabled   <none>   83m   v1.34.12-eks-117f323
+ip-192-168-44-47.ec2.internal    Ready,SchedulingDisabled   <none>   83m   v1.34.12-eks-117f323
+ip-192-168-5-11.ec2.internal     Ready                      <none>   2m2s   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready                      <none>   2m3s   v1.35.9-eks-117f323
+ip-192-168-21-69.ec2.internal    Ready,SchedulingDisabled   <none>   85m    v1.34.12-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready                      <none>   3m4s   v1.35.9-eks-117f323
+ip-192-168-21-69.ec2.internal    Ready,SchedulingDisabled   <none>   87m    v1.34.12-eks-117f323
+ip-192-168-44-47.ec2.internal    NotReady,SchedulingDisabled   <none>   87m    v1.34.12-eks-117f323
+ip-192-168-44-47.ec2.internal    NotReady,SchedulingDisabled   <none>   87m    v1.34.12-eks-117f323
+ip-192-168-44-47.ec2.internal    NotReady,SchedulingDisabled   <none>   87m    v1.34.12-eks-117f323
+ip-192-168-44-47.ec2.internal    NotReady,SchedulingDisabled   <none>   87m    v1.34.12-eks-117f323
+ip-192-168-5-11.ec2.internal     Ready                         <none>   5m47s   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready                         <none>   5m47s   v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     Ready                         <none>   6m7s    v1.35.9-eks-117f323
+ip-192-168-21-69.ec2.internal    NotReady,SchedulingDisabled   <none>   90m     v1.34.12-eks-117f323
+ip-192-168-21-69.ec2.internal    NotReady,SchedulingDisabled   <none>   90m     v1.34.12-eks-117f323
+ip-192-168-21-69.ec2.internal    NotReady,SchedulingDisabled   <none>   90m     v1.34.12-eks-117f323
+ip-192-168-21-69.ec2.internal    NotReady,SchedulingDisabled   <none>   90m     v1.34.12-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready                         <none>   8m41s   v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     Ready                         <none>   8m43s   v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     Ready                         <none>   9m10s   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready                         <none>   10m     v1.35.9-eks-117f323
+
+ubuntu@EKSClient:~$ kubectl version
+Client Version: v1.37.1
+Kustomize Version: v5.8.1
+Server Version: v1.35.8-eks-b9510e3
+Warning: version difference between client (1.37) and server (1.35) exceeds the supported minor version skew of +/-1
+ubuntu@EKSClient:~$ kubectl get pods -A
+NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE
+demo          web-64c966cf88-2nqhv              1/1     Running   0          13m
+demo          web-64c966cf88-hhvcl              1/1     Running   0          9m
+kube-system   aws-node-7rtnw                    2/2     Running   0          14m
+kube-system   aws-node-xjf6m                    2/2     Running   0          14m
+kube-system   coredns-547b59986f-bljhn          1/1     Running   0          12m
+kube-system   coredns-547b59986f-prrlp          1/1     Running   0          13m
+kube-system   kube-proxy-28lv8                  1/1     Running   0          14m
+kube-system   kube-proxy-tql8z                  1/1     Running   0          14m
+kube-system   metrics-server-68c65f79d8-744gh   1/1     Running   0          9m
+kube-system   metrics-server-68c65f79d8-rzvs7   1/1     Running   0          13m
+ubuntu@EKSClient:~$ kubectl get all -n demo
+NAME                       READY   STATUS    RESTARTS   AGE
+pod/web-64c966cf88-2nqhv   1/1     Running   0          13m
+pod/web-64c966cf88-hhvcl   1/1     Running   0          9m11s
+
+NAME          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+service/web   ClusterIP   10.100.153.157   <none>        80/TCP    89m
+
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/web   2/2     2            2           90m
+
+NAME                             DESIRED   CURRENT   READY   AGE
+replicaset.apps/web-64c966cf88   2         2         2       90m
+ubuntu@EKSClient:~$ aws eks describe-cluster \
+  --name $CLUSTER \
+  --region $REGION \
+  --query "cluster.version" \
+  --output text
+1.35
+ubuntu@EKSClient:~$
+
+
+
+

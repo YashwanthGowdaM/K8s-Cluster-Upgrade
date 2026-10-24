@@ -1,0 +1,1090 @@
+ubuntu@EKSClient:~$ export TARGET=1.36
+echo $TARGET
+1.36
+ubuntu@EKSClient:~$ ~/eks-backups/backup-k8s.sh
+>> Backing up cluster-scoped resources...
+>> Backing up namespaced resources...
+   namespace default done
+   namespace demo done
+   namespace kube-node-lease done
+   namespace kube-public done
+   namespace kube-system done
+>> DONE. Backup folder : /home/ubuntu/eks-backups/k8s-backup-20261024-053930
+>> DONE. Backup archive: /home/ubuntu/eks-backups/k8s-backup-20261024-053930.tar.gz
+ubuntu@EKSClient:~$ ls ~/eks-backups/k8s-backup-*/namespaced/demo/
+/home/ubuntu/eks-backups/k8s-backup-20261024-040705/namespaced/demo/:
+configmaps.yaml  deployments.apps.yaml  pods.metrics.k8s.io.yaml  pods.yaml  replicasets.apps.yaml  serviceaccounts.yaml  services.yaml
+
+/home/ubuntu/eks-backups/k8s-backup-20261024-044438/namespaced/demo/:
+configmaps.yaml  deployments.apps.yaml  pods.metrics.k8s.io.yaml  pods.yaml  replicasets.apps.yaml  serviceaccounts.yaml  services.yaml
+
+/home/ubuntu/eks-backups/k8s-backup-20261024-053930/namespaced/demo/:
+configmaps.yaml  deployments.apps.yaml  pods.metrics.k8s.io.yaml  pods.yaml  replicasets.apps.yaml  serviceaccounts.yaml  services.yaml
+ubuntu@EKSClient:~$ mkdir -p ~/eks-backups/aws-config-$(date +%Y%m%d-%H%M%S) && cd ~/eks-backups/aws-config-$(date +%Y%m%d-%H%M%S)
+ubuntu@EKSClient:~/eks-backups/aws-config-20261024-054531$ aws eks describe-cluster --name $CLUSTER --region $REGION > cluster.json
+aws eks list-nodegroups --cluster-name $CLUSTER --region $REGION > nodegroups-list.json
+aws eks describe-nodegroup --cluster-name $CLUSTER --nodegroup-name $NODEGROUP --region $REGION > nodegroup.json
+aws eks list-addons --cluster-name $CLUSTER --region $REGION > addons.json
+eksctl get cluster --name $CLUSTER --region $REGION -o yaml > eksctl-cluster.yaml
+eksctl get nodegroup --cluster $CLUSTER --region $REGION -o yaml > eksctl-nodegroup.yaml
+kubectl version > kubectl-version.txt
+kubectl get nodes -o wide > nodes.txt
+
+ls -l
+Warning: version difference between client (1.37) and server (1.35) exceeds the supported minor version skew of +/-1
+total 40
+-rw-rw-r-- 1 ubuntu ubuntu  111 Oct 24 05:45 addons.json
+-rw-rw-r-- 1 ubuntu ubuntu 5650 Oct 24 05:45 cluster.json
+-rw-rw-r-- 1 ubuntu ubuntu 4383 Oct 24 05:45 eksctl-cluster.yaml
+-rw-rw-r-- 1 ubuntu ubuntu  509 Oct 24 05:45 eksctl-nodegroup.yaml
+-rw-rw-r-- 1 ubuntu ubuntu   86 Oct 24 05:45 kubectl-version.txt
+-rw-rw-r-- 1 ubuntu ubuntu 2310 Oct 24 05:45 nodegroup.json
+-rw-rw-r-- 1 ubuntu ubuntu   55 Oct 24 05:45 nodegroups-list.json
+-rw-rw-r-- 1 ubuntu ubuntu  606 Oct 24 05:45 nodes.txt
+ubuntu@EKSClient:~/eks-backups/aws-config-20261024-054531$ export BACKUP_BUCKET=eks-backups-$ACCOUNT-$REGION
+aws s3 mb s3://$BACKUP_BUCKET --region $REGION
+aws s3 sync ~/eks-backups s3://$BACKUP_BUCKET/$CLUSTER/
+make_bucket: eks-backups-003344631245-us-east-1
+upload: ./addons.json to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024-054531/addons.json
+upload: ./eksctl-cluster.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024-054531/eksctl-cluster.yaml
+upload: ./cluster.json to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024-054531/cluster.json
+upload: ./eksctl-nodegroup.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024-054531/eksctl-nodegroup.yaml
+upload: ./kubectl-version.txt to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024-054531/kubectl-version.txt
+upload: ./nodegroup.json to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024-054531/nodegroup.json
+upload: ./nodegroups-list.json to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024-054531/nodegroups-list.json
+upload: ./nodes.txt to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/aws-config-20261024-054531/nodes.txt
+upload: ../k8s-backup-20261024-044438.tar.gz to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438.tar.gz
+upload: ../k8s-backup-20261024-044438/cluster-scoped/validatingwebhookconfigurations.admissionregistration.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/validatingwebhookconfigurations.admissionregistration.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/storageclasses.storage.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/storageclasses.storage.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/servicecidrs.networking.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/servicecidrs.networking.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/priorityclasses.scheduling.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/priorityclasses.scheduling.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/nodes.metrics.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/nodes.metrics.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/prioritylevelconfigurations.flowcontrol.apiserver.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/prioritylevelconfigurations.flowcontrol.apiserver.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/nodes.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/nodes.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/namespaces.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/namespaces.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/ipaddresses.networking.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/ipaddresses.networking.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/flowschemas.flowcontrol.apiserver.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/flowschemas.flowcontrol.apiserver.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/csinodes.storage.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/csinodes.storage.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/mutatingwebhookconfigurations.admissionregistration.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/mutatingwebhookconfigurations.admissionregistration.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/customresourcedefinitions.apiextensions.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/customresourcedefinitions.apiextensions.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/csidrivers.storage.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/csidrivers.storage.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/cninodes.vpcresources.k8s.aws.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/cninodes.vpcresources.k8s.aws.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/clusterroles.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/clusterroles.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/clusterrolebindings.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/clusterrolebindings.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/certificatesigningrequests.certificates.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/certificatesigningrequests.certificates.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/cluster-scoped/apiservices.apiregistration.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/cluster-scoped/apiservices.apiregistration.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/default/services.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/default/services.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/default/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/default/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/default/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/default/configmaps.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/demo/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/demo/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-node-lease/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-node-lease/configmaps.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-node-lease/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-node-lease/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/demo/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/demo/configmaps.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/demo/deployments.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/demo/deployments.apps.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/demo/pods.metrics.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/demo/pods.metrics.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/demo/pods.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/demo/pods.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/demo/replicasets.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/demo/replicasets.apps.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/demo/services.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/demo/services.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-node-lease/leases.coordination.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-node-lease/leases.coordination.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-public/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-public/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-public/roles.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-public/roles.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-public/rolebindings.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-public/rolebindings.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-public/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-public/configmaps.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-system/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-system/configmaps.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-system/controllerrevisions.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-system/controllerrevisions.apps.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-system/daemonsets.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-system/daemonsets.apps.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-system/services.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-system/services.yaml
+upload: ../k8s-backup-20261024-053930.tar.gz to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930.tar.gz
+upload: ../k8s-backup-20261024-044438/namespaced/kube-system/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-system/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-system/rolebindings.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-system/rolebindings.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-system/replicasets.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-system/replicasets.apps.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-system/pods.metrics.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-system/pods.metrics.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-system/roles.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-system/roles.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-system/leases.coordination.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-system/leases.coordination.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-system/poddisruptionbudgets.policy.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-system/poddisruptionbudgets.policy.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/validatingwebhookconfigurations.admissionregistration.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/validatingwebhookconfigurations.admissionregistration.k8s.io.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-system/deployments.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-system/deployments.apps.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/storageclasses.storage.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/storageclasses.storage.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/servicecidrs.networking.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/servicecidrs.networking.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/priorityclasses.scheduling.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/priorityclasses.scheduling.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/prioritylevelconfigurations.flowcontrol.apiserver.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/prioritylevelconfigurations.flowcontrol.apiserver.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/nodes.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/nodes.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/nodes.metrics.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/nodes.metrics.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/namespaces.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/namespaces.yaml
+upload: ../k8s-backup-20261024-044438/namespaced/kube-system/pods.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-044438/namespaced/kube-system/pods.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/flowschemas.flowcontrol.apiserver.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/flowschemas.flowcontrol.apiserver.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/ipaddresses.networking.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/ipaddresses.networking.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/csidrivers.storage.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/csidrivers.storage.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/csinodes.storage.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/csinodes.storage.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/cninodes.vpcresources.k8s.aws.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/cninodes.vpcresources.k8s.aws.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/clusterroles.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/clusterroles.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/customresourcedefinitions.apiextensions.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/customresourcedefinitions.apiextensions.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/certificatesigningrequests.certificates.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/certificatesigningrequests.certificates.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/clusterrolebindings.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/clusterrolebindings.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/default/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/default/configmaps.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/apiservices.apiregistration.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/apiservices.apiregistration.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/default/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/default/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-053930/cluster-scoped/mutatingwebhookconfigurations.admissionregistration.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/cluster-scoped/mutatingwebhookconfigurations.admissionregistration.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/default/services.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/default/services.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/demo/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/demo/configmaps.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/demo/deployments.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/demo/deployments.apps.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/demo/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/demo/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/demo/pods.metrics.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/demo/pods.metrics.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/demo/replicasets.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/demo/replicasets.apps.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/demo/pods.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/demo/pods.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/demo/services.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/demo/services.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-node-lease/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-node-lease/configmaps.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-node-lease/leases.coordination.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-node-lease/leases.coordination.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-node-lease/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-node-lease/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-public/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-public/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-public/roles.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-public/roles.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-public/rolebindings.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-public/rolebindings.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-system/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-system/configmaps.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-public/configmaps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-public/configmaps.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-system/roles.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-system/roles.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-system/services.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-system/services.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-system/serviceaccounts.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-system/serviceaccounts.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-system/rolebindings.rbac.authorization.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-system/rolebindings.rbac.authorization.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-system/pods.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-system/pods.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-system/pods.metrics.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-system/pods.metrics.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-system/replicasets.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-system/replicasets.apps.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-system/leases.coordination.k8s.io.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-system/leases.coordination.k8s.io.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-system/daemonsets.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-system/daemonsets.apps.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-system/controllerrevisions.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-system/controllerrevisions.apps.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-system/deployments.apps.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-system/deployments.apps.yaml
+upload: ../k8s-backup-20261024-053930/namespaced/kube-system/poddisruptionbudgets.policy.yaml to s3://eks-backups-003344631245-us-east-1/my-eks-cluster/k8s-backup-20261024-053930/namespaced/kube-system/poddisruptionbudgets.policy.yaml
+ubuntu@EKSClient:~/eks-backups/aws-config-20261024-054531$
+
+
+ubuntu@EKSClient:~/eks-backups/aws-config-20261024-054531$ aws eks describe-cluster \
+  --name $CLUSTER \
+  --region $REGION \
+  --query "cluster.{Version:version,Status:status}" \
+  --output table
+-----------------------
+|   DescribeCluster   |
++---------+-----------+
+| Status  |  Version  |
++---------+-----------+
+|  ACTIVE |  1.35     |
++---------+-----------+
+ubuntu@EKSClient:~/eks-backups/aws-config-20261024-054531$
+ubuntu@EKSClient:~$ aws eks describe-cluster-versions \
+  --region $REGION \
+  --query "clusterVersions[].{Version:clusterVersion,Status:status}" \
+  --output table
+---------------------------------
+|    DescribeClusterVersions    |
++-------------------+-----------+
+|      Status       |  Version  |
++-------------------+-----------+
+|  STANDARD_SUPPORT |  1.37     |
+|  STANDARD_SUPPORT |  1.36     |
+|  STANDARD_SUPPORT |  1.35     |
+|  STANDARD_SUPPORT |  1.34     |
+|  EXTENDED_SUPPORT |  1.33     |
+|  EXTENDED_SUPPORT |  1.32     |
+|  EXTENDED_SUPPORT |  1.31     |
++-------------------+-----------+
+ubuntu@EKSClient:~$ aws eks update-kubeconfig \
+  --name $CLUSTER \
+  --region $REGION
+Updated context arn:aws:eks:us-east-1:003344631245:cluster/my-eks-cluster in /home/ubuntu/.kube/config
+ubuntu@EKSClient:~$ kubectl get nodes
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-5-11.ec2.internal     Ready    <none>   30m   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready    <none>   30m   v1.35.9-eks-117f323
+
+ubuntu@EKSClient:~$ aws eks list-insights --cluster-name $CLUSTER --region $REGION \
+  --query "insights[].{Name:name,Target:kubernetesVersion,Status:insightStatus.status}" --output table
+----------------------------------------------------------------------
+|                            ListInsights                            |
++----------------------------------------------+----------+----------+
+|                     Name                     | Status   | Target   |
++----------------------------------------------+----------+----------+
+|  kube-proxy version skew                     |  PASSING |  1.35    |
+|  Deprecated APIs removed in Kubernetes v1.38 |  PASSING |  1.38    |
+|  Deprecated APIs removed in Kubernetes v1.37 |  PASSING |  1.37    |
+|  Cluster health issues                       |  PASSING |  1.35    |
+|  Kubelet version skew                        |  PASSING |  1.35    |
+|  EKS add-on version compatibility            |  UNKNOWN |  1.35    |
+|  Amazon Linux 2 compatibility                |  PASSING |  1.35    |
++----------------------------------------------+----------+----------+
+ubuntu@EKSClient:~$ aws eks list-insights --cluster-name $CLUSTER --region $REGION --filter kubernetesVersions=1.36
+{
+    "insights": []
+}
+ubuntu@EKSClient:~$ for ADDON in kube-proxy vpc-cni coredns metrics-server; do
+  echo -n "$ADDON: "
+  aws eks describe-addon --cluster-name $CLUSTER --addon-name $ADDON --region $REGION --query "addon.addonVersion" --output text
+done
+v1.35.3-eksbuild.52
+v1.22.4-eksbuild.3
+v1.13.2-eksbuild.51
+v0.9.0-eksbuild.14
+ubuntu@EKSClient:~$ for ADDON in kube-proxy vpc-cni coredns metrics-server; do
+  echo "=== $ADDON ==="
+  aws eks describe-addon-versions --addon-name $ADDON --kubernetes-version 1.36 --region $REGION \
+    --query "addons[0].addonVersions[].{Version:addonVersion,Default:compatibilities[0].defaultVersion}" --output table | head -15
+done
+=== kube-proxy ===
+-------------------------------------
+|       DescribeAddonVersions       |
++----------+------------------------+
+|  Default |        Version         |
++----------+------------------------+
+|  False   |  v1.36.0-eksbuild.55   |
+|  True    |  v1.36.0-eksbuild.48   |
+|  False   |  v1.36.0-eksbuild.46   |
+|  False   |  v1.36.0-eksbuild.45   |
+|  False   |  v1.36.0-eksbuild.25   |
+|  False   |  v1.36.0-eksbuild.21   |
+|  False   |  v1.36.0-eksbuild.17   |
+|  False   |  v1.36.0-eksbuild.15   |
+|  False   |  v1.36.0-eksbuild.14   |
+|  False   |  v1.36.0-eksbuild.13   |
+=== vpc-cni ===
+-----------------------------------
+|      DescribeAddonVersions      |
++----------+----------------------+
+|  Default |       Version        |
++----------+----------------------+
+|  False   |  v1.23.2-eksbuild.6  |
+|  False   |  v1.23.2-eksbuild.4  |
+|  False   |  v1.23.2-eksbuild.3  |
+|  False   |  v1.23.2-eksbuild.1  |
+|  False   |  v1.23.1-eksbuild.1  |
+|  False   |  v1.23.0-eksbuild.1  |
+|  False   |  v1.22.4-eksbuild.8  |
+|  False   |  v1.22.4-eksbuild.6  |
+|  False   |  v1.22.4-eksbuild.5  |
+|  True    |  v1.22.4-eksbuild.3  |
+=== coredns ===
+------------------------------------
+|       DescribeAddonVersions      |
++----------+-----------------------+
+|  Default |        Version        |
++----------+-----------------------+
+|  False   |  v1.14.7-eksbuild.19  |
+|  True    |  v1.14.7-eksbuild.11  |
+|  False   |  v1.14.7-eksbuild.10  |
+|  False   |  v1.14.6-eksbuild.4   |
+|  False   |  v1.14.3-eksbuild.23  |
+|  False   |  v1.14.3-eksbuild.22  |
+|  False   |  v1.14.3-eksbuild.16  |
+|  False   |  v1.14.3-eksbuild.14  |
+|  False   |  v1.14.3-eksbuild.9   |
+|  False   |  v1.14.3-eksbuild.3   |
+=== metrics-server ===
+-----------------------------------
+|      DescribeAddonVersions      |
++----------+----------------------+
+|  Default |       Version        |
++----------+----------------------+
+|  True    |  v0.9.0-eksbuild.14  |
+|  False   |  v0.9.0-eksbuild.13  |
+|  False   |  v0.9.0-eksbuild.12  |
+|  False   |  v0.9.0-eksbuild.11  |
+|  False   |  v0.9.0-eksbuild.10  |
+|  False   |  v0.9.0-eksbuild.9   |
+|  False   |  v0.9.0-eksbuild.8   |
+|  False   |  v0.9.0-eksbuild.7   |
+|  False   |  v0.9.0-eksbuild.6   |
+|  False   |  v0.9.0-eksbuild.5   |
+ubuntu@EKSClient:~$ aws eks describe-addon-versions --addon-name coredns --kubernetes-version 1.36 --region $REGION \
+  --query "addons[0].addonVersions[].addonVersion" --output text | tr '\t' '\n' | grep -n "v1.13.2-eksbuild.51"
+14:v1.13.2-eksbuild.51
+ubuntu@EKSClient:~$ aws eks describe-addon-versions --addon-name kube-proxy --kubernetes-version 1.36 --region $REGION \
+  --query "addons[0].addonVersions[].addonVersion" --output text | tr '\t' '\n' | grep -n "v1.35.3-eksbuild.52"
+16:v1.35.3-eksbuild.52
+ubuntu@EKSClient:~$
+ubuntu@EKSClient:~$ eksctl upgrade cluster \
+  --name $CLUSTER \
+  --region $REGION \
+  --version $TARGET \
+  --approve
+2026-10-24 05:50:47 [ℹ]  will upgrade cluster "my-eks-cluster" control plane from current version "1.35" to "1.36"
+2026-10-24 05:58:18 [✔]  cluster "my-eks-cluster" control plane has been upgraded to version "1.36"
+2026-10-24 05:58:18 [ℹ]  you will need to follow the upgrade procedure for all of nodegroups and add-ons
+2026-10-24 05:58:18 [ℹ]  re-building cluster stack "eksctl-my-eks-cluster-cluster"
+2026-10-24 05:58:18 [✔]  all resources in cluster stack "eksctl-my-eks-cluster-cluster" are up-to-date
+2026-10-24 05:58:18 [ℹ]  checking security group configuration for all nodegroups
+2026-10-24 05:58:18 [ℹ]  all nodegroups have up-to-date cloudformation templates
+ubuntu@EKSClient:~$ aws eks describe-cluster --name $CLUSTER --region $REGION --query "cluster.{Version:version,Status:status}" --output text
+ACTIVE  1.36
+ubuntu@EKSClient:~$
+ubuntu@EKSClient:~$ eksctl update addon --name kube-proxy --cluster $CLUSTER --region $REGION --version v1.36.0-eksbuild.48 --force
+2026-10-24 05:59:09 [!]  no IAM OIDC provider associated with cluster, try 'eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=my-eks-cluster'
+2026-10-24 05:59:09 [ℹ]  Kubernetes version "1.36" in use by cluster "my-eks-cluster"
+2026-10-24 05:59:10 [ℹ]  new version provided v1.36.0-eksbuild.48
+2026-10-24 05:59:10 [ℹ]  updating addon
+2026-10-24 05:59:40 [ℹ]  addon "kube-proxy" active
+ubuntu@EKSClient:~$ kubectl version
+Client Version: v1.37.1
+Kustomize Version: v5.8.1
+Server Version: v1.36.4-eks-b9510e3
+ubuntu@EKSClient:~$ kubectl get nodes
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-5-11.ec2.internal     Ready    <none>   39m   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready    <none>   39m   v1.35.9-eks-117f323
+ubuntu@EKSClient:~$ kubectl get pods -A | grep -v -E "Running|Completed"
+NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE
+ubuntu@EKSClient:~$ kubectl get pods -n kube-system
+NAME                              READY   STATUS    RESTARTS   AGE
+aws-node-7rtnw                    2/2     Running   0          40m
+aws-node-xjf6m                    2/2     Running   0          40m
+coredns-547b59986f-bljhn          1/1     Running   0          37m
+coredns-547b59986f-prrlp          1/1     Running   0          38m
+kube-proxy-6s22n                  1/1     Running   0          66s
+kube-proxy-kk4wl                  1/1     Running   0          64s
+metrics-server-68c65f79d8-744gh   1/1     Running   0          34m
+metrics-server-68c65f79d8-rzvs7   1/1     Running   0          38m
+ubuntu@EKSClient:~$
+ubuntu@EKSClient:~$ eksctl update addon --name coredns --cluster $CLUSTER --region $REGION --version v1.14.7-eksbuild.11 --force
+2026-10-24 06:03:52 [!]  no IAM OIDC provider associated with cluster, try 'eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=my-eks-cluster'
+2026-10-24 06:03:52 [ℹ]  Kubernetes version "1.36" in use by cluster "my-eks-cluster"
+2026-10-24 06:03:53 [ℹ]  new version provided v1.14.7-eksbuild.11
+2026-10-24 06:03:53 [ℹ]  updating addon
+ubuntu@EKSClient:~$ kubectl get pods -n kube-system
+NAME                              READY   STATUS    RESTARTS   AGE
+aws-node-7rtnw                    2/2     Running   0          44m
+aws-node-xjf6m                    2/2     Running   0          44m
+coredns-687dddfb64-7rbr5          1/1     Running   0          45s
+coredns-687dddfb64-tf6gd          1/1     Running   0          45s
+kube-proxy-6s22n                  1/1     Running   0          5m28s
+kube-proxy-kk4wl                  1/1     Running   0          5m26s
+metrics-server-68c65f79d8-744gh   1/1     Running   0          38m
+metrics-server-68c65f79d8-rzvs7   1/1     Running   0          42m
+ubuntu@EKSClient:~$
+ubuntu@EKSClient:~$ kubectl run dnstest --rm -it --restart=Never --image=busybox:1.36 -- nslookup web.demo.svc.cluster.local
+Server:         10.100.0.10
+Address:        10.100.0.10:53
+
+
+Name:   web.demo.svc.cluster.local
+Address: 10.100.153.157
+
+pod "dnstest" deleted from default namespace
+ubuntu@EKSClient:~$ aws eks describe-addon --cluster-name $CLUSTER --addon-name coredns --region $REGION \
+  --query "addon.{Version:addonVersion,Status:status}" --output text
+ACTIVE  v1.14.7-eksbuild.11
+ubuntu@EKSClient:~$ echo $TARGET
+1.36
+ubuntu@EKSClient:~$ eksctl upgrade nodegroup --name $NODEGROUP --cluster $CLUSTER --region $REGION --kubernetes-version $TARGET
+ubuntu@EKSClient:~$ eksctl upgrade nodegroup --name $NODEGROUP --cluster $CLUSTER --region $REGION --kubernetes-version $TARGET
+2026-10-24 06:07:25 [ℹ]  will upgrade nodes to release version: 1.36.5-20261019
+2026-10-24 06:07:25 [ℹ]  upgrading nodegroup version
+2026-10-24 06:07:25 [ℹ]  updating nodegroup stack
+2026-10-24 06:07:25 [ℹ]  waiting for CloudFormation changeset "eksctl-update-nodegroup-1792822045" for stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 06:07:55 [ℹ]  waiting for CloudFormation changeset "eksctl-update-nodegroup-1792822045" for stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 06:07:56 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 06:08:26 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 06:08:56 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 06:10:03 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 06:11:20 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 06:13:08 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 06:14:59 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 06:16:27 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 06:17:30 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 06:18:50 [ℹ]  waiting for CloudFormation stack "eksctl-my-eks-cluster-nodegroup-my-worker-node"
+2026-10-24 06:18:50 [ℹ]  nodegroup successfully upgraded
+ubuntu@EKSClient:~$
+
+
+###2nd & 3rd terminal monitoring node & demo pods behaviour
+ubuntu@EKSClient:~$ kubectl get nodes -w
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-5-11.ec2.internal     Ready    <none>   47m   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready    <none>   47m   v1.35.9-eks-117f323
+ip-192-168-16-172.ec2.internal   NotReady   <none>   0s    v1.36.5-eks-117f323
+ip-192-168-16-172.ec2.internal   NotReady   <none>   0s    v1.36.5-eks-117f323
+ip-192-168-16-172.ec2.internal   NotReady   <none>   0s    v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   NotReady   <none>   0s    v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   NotReady   <none>   0s    v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   NotReady   <none>   0s    v1.36.5-eks-117f323
+ip-192-168-16-172.ec2.internal   NotReady   <none>   1s    v1.36.5-eks-117f323
+ip-192-168-16-172.ec2.internal   NotReady   <none>   1s    v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   NotReady   <none>   1s    v1.36.5-eks-117f323
+ip-192-168-16-172.ec2.internal   NotReady   <none>   1s    v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   NotReady   <none>   1s    v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   NotReady   <none>   1s    v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   NotReady   <none>   2s    v1.36.5-eks-117f323
+ip-192-168-16-172.ec2.internal   NotReady   <none>   2s    v1.36.5-eks-117f323
+ip-192-168-16-172.ec2.internal   NotReady   <none>   10s   v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   NotReady   <none>   10s   v1.36.5-eks-117f323
+ip-192-168-16-172.ec2.internal   Ready      <none>   11s   v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   Ready      <none>   11s   v1.36.5-eks-117f323
+ip-192-168-16-172.ec2.internal   Ready      <none>   11s   v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   Ready      <none>   11s   v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   Ready      <none>   12s   v1.36.5-eks-117f323
+ip-192-168-16-172.ec2.internal   Ready      <none>   12s   v1.36.5-eks-117f323
+ip-192-168-16-172.ec2.internal   Ready      <none>   15s   v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   Ready      <none>   15s   v1.36.5-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready,SchedulingDisabled   <none>   49m   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready,SchedulingDisabled   <none>   49m   v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     Ready,SchedulingDisabled   <none>   49m   v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     Ready,SchedulingDisabled   <none>   49m   v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready,SchedulingDisabled   <none>   49m   v1.35.9-eks-117f323
+ip-192-168-16-172.ec2.internal   Ready                      <none>   30s   v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   Ready                      <none>   31s   v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   Ready                      <none>   2m3s   v1.36.5-eks-117f323
+ip-192-168-51-209.ec2.internal   Ready,SchedulingDisabled   <none>   51m    v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     Ready,SchedulingDisabled   <none>   51m    v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     Ready,SchedulingDisabled   <none>   52m    v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   NotReady,SchedulingDisabled   <none>   52m    v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   NotReady,SchedulingDisabled   <none>   52m    v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   NotReady,SchedulingDisabled   <none>   52m    v1.35.9-eks-117f323
+ip-192-168-51-209.ec2.internal   NotReady,SchedulingDisabled   <none>   52m    v1.35.9-eks-117f323
+ip-192-168-16-172.ec2.internal   Ready                         <none>   5m5s   v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   Ready                         <none>   5m16s   v1.36.5-eks-117f323
+ip-192-168-5-11.ec2.internal     NotReady,SchedulingDisabled   <none>   55m     v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     NotReady,SchedulingDisabled   <none>   55m     v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     NotReady,SchedulingDisabled   <none>   55m     v1.35.9-eks-117f323
+ip-192-168-5-11.ec2.internal     NotReady,SchedulingDisabled   <none>   55m     v1.35.9-eks-117f323
+ip-192-168-35-221.ec2.internal   Ready                         <none>   7m34s   v1.36.5-eks-117f323
+ip-192-168-16-172.ec2.internal   Ready                         <none>   7m34s   v1.36.5-eks-117f323
+ip-192-168-16-172.ec2.internal   Ready                         <none>   8m48s   v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   Ready                         <none>   10m     v1.36.5-eks-117f323
+
+
+ubuntu@EKSClient:~$ kubectl get pods -n demo -w
+NAME                   READY   STATUS    RESTARTS   AGE
+web-64c966cf88-2nqhv   1/1     Running   0          46m
+web-64c966cf88-hhvcl   1/1     Running   0          42m
+web-64c966cf88-2nqhv   1/1     Running   0          48m
+web-64c966cf88-2nqhv   1/1     Terminating   0          48m
+web-64c966cf88-2nqhv   1/1     Terminating   0          48m
+web-64c966cf88-fjnwk   0/1     Pending       0          0s
+web-64c966cf88-fjnwk   0/1     Pending       0          0s
+web-64c966cf88-2nqhv   0/1     Completed     0          48m
+web-64c966cf88-fjnwk   0/1     ContainerCreating   0          0s
+web-64c966cf88-fjnwk   0/1     ContainerCreating   0          0s
+web-64c966cf88-2nqhv   0/1     Completed           0          48m
+web-64c966cf88-2nqhv   0/1     Completed           0          48m
+web-64c966cf88-fjnwk   1/1     Running             0          4s
+web-64c966cf88-hhvcl   1/1     Running             0          47m
+web-64c966cf88-hhvcl   1/1     Terminating         0          47m
+web-64c966cf88-hhvcl   1/1     Terminating         0          47m
+web-64c966cf88-csq45   0/1     Pending             0          0s
+web-64c966cf88-csq45   0/1     Pending             0          0s
+web-64c966cf88-csq45   0/1     ContainerCreating   0          0s
+web-64c966cf88-hhvcl   0/1     Completed           0          47m
+web-64c966cf88-csq45   0/1     ContainerCreating   0          1s
+web-64c966cf88-hhvcl   0/1     Completed           0          47m
+web-64c966cf88-hhvcl   0/1     Completed           0          47m
+web-64c966cf88-csq45   1/1     Running             0          4s
+
+ubuntu@EKSClient:~$ kubectl get nodes
+kubectl get pods -A
+kubectl get all -n demo
+aws eks describe-cluster --name $CLUSTER --region $REGION --query "cluster.version" --output text
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-16-172.ec2.internal   Ready    <none>   12m   v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   Ready    <none>   12m   v1.36.5-eks-117f323
+NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE
+demo          web-64c966cf88-csq45              1/1     Running   0          7m59s
+demo          web-64c966cf88-fjnwk              1/1     Running   0          11m
+kube-system   aws-node-gh9lt                    2/2     Running   0          12m
+kube-system   aws-node-jdrlj                    2/2     Running   0          12m
+kube-system   coredns-687dddfb64-7t2hx          1/1     Running   0          7m59s
+kube-system   coredns-687dddfb64-hq7zt          1/1     Running   0          11m
+kube-system   kube-proxy-2wklg                  1/1     Running   0          12m
+kube-system   kube-proxy-gzvhh                  1/1     Running   0          12m
+kube-system   metrics-server-68c65f79d8-cjtrf   1/1     Running   0          11m
+kube-system   metrics-server-68c65f79d8-xsgt9   1/1     Running   0          7m59s
+NAME                       READY   STATUS    RESTARTS   AGE
+pod/web-64c966cf88-csq45   1/1     Running   0          8m
+pod/web-64c966cf88-fjnwk   1/1     Running   0          11m
+
+NAME          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+service/web   ClusterIP   10.100.153.157   <none>        80/TCP    136m
+
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/web   2/2     2            2           136m
+
+NAME                             DESIRED   CURRENT   READY   AGE
+replicaset.apps/web-64c966cf88   2         2         2       136m
+1.36
+ubuntu@EKSClient:~$
+ubuntu@EKSClient:~$ kubectl get nodes
+kubectl get pods -A
+kubectl get all -n demo
+aws eks describe-cluster --name $CLUSTER --region $REGION --query "cluster.version" --output text
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-16-172.ec2.internal   Ready    <none>   12m   v1.36.5-eks-117f323
+ip-192-168-35-221.ec2.internal   Ready    <none>   12m   v1.36.5-eks-117f323
+NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE
+demo          web-64c966cf88-csq45              1/1     Running   0          7m59s
+demo          web-64c966cf88-fjnwk              1/1     Running   0          11m
+kube-system   aws-node-gh9lt                    2/2     Running   0          12m
+kube-system   aws-node-jdrlj                    2/2     Running   0          12m
+kube-system   coredns-687dddfb64-7t2hx          1/1     Running   0          7m59s
+kube-system   coredns-687dddfb64-hq7zt          1/1     Running   0          11m
+kube-system   kube-proxy-2wklg                  1/1     Running   0          12m
+kube-system   kube-proxy-gzvhh                  1/1     Running   0          12m
+kube-system   metrics-server-68c65f79d8-cjtrf   1/1     Running   0          11m
+kube-system   metrics-server-68c65f79d8-xsgt9   1/1     Running   0          7m59s
+NAME                       READY   STATUS    RESTARTS   AGE
+pod/web-64c966cf88-csq45   1/1     Running   0          8m
+pod/web-64c966cf88-fjnwk   1/1     Running   0          11m
+
+NAME          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+service/web   ClusterIP   10.100.153.157   <none>        80/TCP    136m
+
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/web   2/2     2            2           136m
+
+NAME                             DESIRED   CURRENT   READY   AGE
+replicaset.apps/web-64c966cf88   2         2         2       136m
+1.36
+ubuntu@EKSClient:~$ aws eks list-insights \
+  --cluster-name $CLUSTER \
+  --region $REGION \
+  --filter kubernetesVersions=1.37 \
+  --output table
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|                                                                                                           ListInsights                                                                                                           |
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+||                                                                                                            insights                                                                                                            ||
+|+--------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+|
+||  category          |  UPGRADE_READINESS                                                                                                                                                                                        ||
+||  description       |  Checks for usage of deprecated APIs that are scheduled for removal in Kubernetes v1.37. Upgrading your cluster before migrating to the updated APIs supported by v1.37 could cause application impact.   ||
+||  id                |  9b638b32-4c82-4412-b797-a19565d08775                                                                                                                                                                     ||
+||  kubernetesVersion |  1.37                                                                                                                                                                                                     ||
+||  lastRefreshTime   |  2026-10-24T03:59:47+00:00                                                                                                                                                                                ||
+||  lastTransitionTime|  2026-10-24T03:59:19+00:00                                                                                                                                                                                ||
+||  name              |  Deprecated APIs removed in Kubernetes v1.37                                                                                                                                                              ||
+|+--------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+|
+|||                                                                                                         insightStatus                                                                                                        |||
+||+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+||
+|||  reason                      |  No deprecated API usage detected within the last 30 days.                                                                                                                                    |||
+|||  status                      |  PASSING                                                                                                                                                                                      |||
+||+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+||
+ubuntu@EKSClient:~$ eksctl get addon \
+  --cluster $CLUSTER \
+  --region $REGION
+2026-10-24 06:23:05 [ℹ]  Kubernetes version "1.36" in use by cluster "my-eks-cluster"
+2026-10-24 06:23:05 [ℹ]  getting all addons
+2026-10-24 06:23:06 [ℹ]  to see issues for an addon run `eksctl get addon --name <addon-name> --cluster <cluster-name>`
+NAME            VERSION                 STATUS  ISSUES  IAMROLE UPDATE AVAILABLE                                                                 CONFIGURATION VALUES     NAMESPACE       POD IDENTITY ASSOCIATION ROLES
+coredns         v1.14.7-eksbuild.11     ACTIVE  0               v1.14.7-eksbuild.19                                                              kube-system
+kube-proxy      v1.36.0-eksbuild.48     ACTIVE  0               v1.36.0-eksbuild.55                                                              kube-system
+metrics-server  v0.9.0-eksbuild.14      ACTIVE  0                                                                                                kube-system
+vpc-cni         v1.22.4-eksbuild.3      ACTIVE  0               v1.23.2-eksbuild.6,v1.23.2-eksbuild.4,v1.23.2-eksbuild.3,v1.23.2-eksbuild.1,v1.23.1-eksbuild.1,v1.23.0-eksbuild.1,v1.22.4-eksbuild.8,v1.22.4-eksbuild.6,v1.22.4-eksbuild.5                                kube-system
+ubuntu@EKSClient:~$ aws eks describe-nodegroup \
+  --cluster-name $CLUSTER \
+  --nodegroup-name $NODEGROUP \
+  --region $REGION \
+  --query "nodegroup.{Version:version,Release:releaseVersion,Status:status}" \
+  --output table
+------------------------------------------
+|            DescribeNodegroup           |
++------------------+---------+-----------+
+|      Release     | Status  |  Version  |
++------------------+---------+-----------+
+|  1.36.5-20261019 |  ACTIVE |  1.36     |
++------------------+---------+-----------+
+ubuntu@EKSClient:~$ kubectl get pods -A
+NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE
+demo          web-64c966cf88-csq45              1/1     Running   0          10m
+demo          web-64c966cf88-fjnwk              1/1     Running   0          13m
+kube-system   aws-node-gh9lt                    2/2     Running   0          15m
+kube-system   aws-node-jdrlj                    2/2     Running   0          15m
+kube-system   coredns-687dddfb64-7t2hx          1/1     Running   0          10m
+kube-system   coredns-687dddfb64-hq7zt          1/1     Running   0          13m
+kube-system   kube-proxy-2wklg                  1/1     Running   0          15m
+kube-system   kube-proxy-gzvhh                  1/1     Running   0          15m
+kube-system   metrics-server-68c65f79d8-cjtrf   1/1     Running   0          13m
+kube-system   metrics-server-68c65f79d8-xsgt9   1/1     Running   0          10m
+ubuntu@EKSClient:~$ kubectl describe nodes | grep -A3 Conditions
+Conditions:
+  Type             Status  LastHeartbeatTime                 LastTransitionTime                Reason                       Message
+  ----             ------  -----------------                 ------------------                ------                       -------
+  MemoryPressure   False   Sat, 24 Oct 2026 06:22:37 +0000   Sat, 24 Oct 2026 06:08:41 +0000   KubeletHasSufficientMemory   kubelet has sufficient memory available
+--
+Conditions:
+  Type             Status  LastHeartbeatTime                 LastTransitionTime                Reason                       Message
+  ----             ------  -----------------                 ------------------                ------                       -------
+  MemoryPressure   False   Sat, 24 Oct 2026 06:19:06 +0000   Sat, 24 Oct 2026 06:08:41 +0000   KubeletHasSufficientMemory   kubelet has sufficient memory available
+ubuntu@EKSClient:~$ kubectl get events -A --sort-by=.lastTimestamp
+NAMESPACE     LAST SEEN   TYPE      REASON                    OBJECT                                 MESSAGE
+default       15m         Normal    Starting                  node/ip-192-168-35-221.ec2.internal
+default       15m         Normal    Starting                  node/ip-192-168-16-172.ec2.internal
+default       25m         Normal    Starting                  node/ip-192-168-51-209.ec2.internal
+default       64m         Normal    Starting                  node/ip-192-168-51-209.ec2.internal
+default       64m         Normal    Starting                  node/ip-192-168-5-11.ec2.internal
+default       25m         Normal    Starting                  node/ip-192-168-5-11.ec2.internal
+demo          62m         Normal    Killing                   pod/web-64c966cf88-nlgz5               Stopping container nginx
+kube-system   62m         Normal    Killing                   pod/metrics-server-68c65f79d8-wttv2    Stopping container metrics-server
+kube-system   62m         Normal    Pulling                   pod/metrics-server-68c65f79d8-rzvs7    Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/metrics-server:v0.9.0-eksbuild.14"
+kube-system   62m         Normal    Killing                   pod/coredns-547b59986f-lmlff           Stopping container coredns
+kube-system   62m         Normal    Pulling                   pod/coredns-547b59986f-prrlp           Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.13.2-eksbuild.51"
+kube-system   62m         Normal    Scheduled                 pod/coredns-547b59986f-prrlp           Successfully assigned kube-system/coredns-547b59986f-prrlp to ip-192-168-5-11.ec2.internal
+kube-system   62m         Normal    SuccessfulCreate          replicaset/metrics-server-68c65f79d8   Created pod: metrics-server-68c65f79d8-rzvs7
+demo          62m         Normal    Pulling                   pod/web-64c966cf88-2nqhv               Pulling image "nginx"
+kube-system   62m         Normal    Scheduled                 pod/metrics-server-68c65f79d8-rzvs7    Successfully assigned kube-system/metrics-server-68c65f79d8-rzvs7 to ip-192-168-51-209.ec2.internal
+demo          62m         Normal    Scheduled                 pod/web-64c966cf88-2nqhv               Successfully assigned demo/web-64c966cf88-2nqhv to ip-192-168-51-209.ec2.internal
+demo          62m         Normal    SuccessfulCreate          replicaset/web-64c966cf88              Created pod: web-64c966cf88-2nqhv
+kube-system   62m         Normal    SuccessfulCreate          replicaset/coredns-547b59986f          Created pod: coredns-547b59986f-prrlp
+kube-system   62m         Normal    Created                   pod/coredns-547b59986f-prrlp           Container created
+kube-system   62m         Normal    Started                   pod/coredns-547b59986f-prrlp           Container started
+kube-system   62m         Normal    Pulled                    pod/coredns-547b59986f-prrlp           Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.13.2-eksbuild.51" in 1.075s (1.075s including waiting). Image size: 25614712 bytes.
+kube-system   62m         Normal    Pulled                    pod/metrics-server-68c65f79d8-rzvs7    Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/metrics-server:v0.9.0-eksbuild.14" in 1.812s (1.812s including waiting). Image size: 22794933 bytes.
+kube-system   62m         Normal    Created                   pod/metrics-server-68c65f79d8-rzvs7    Container created
+kube-system   62m         Normal    Started                   pod/metrics-server-68c65f79d8-rzvs7    Container started
+demo          62m         Normal    Created                   pod/web-64c966cf88-2nqhv               Container created
+demo          62m         Normal    Pulled                    pod/web-64c966cf88-2nqhv               Successfully pulled image "nginx" in 3.136s (3.136s including waiting). Image size: 63903938 bytes.
+demo          62m         Normal    Started                   pod/web-64c966cf88-2nqhv               Container started
+kube-system   61m         Normal    Scheduled                 pod/coredns-547b59986f-bljhn           Successfully assigned kube-system/coredns-547b59986f-bljhn to ip-192-168-51-209.ec2.internal
+kube-system   61m         Normal    Killing                   pod/coredns-547b59986f-thspj           Stopping container coredns
+kube-system   61m         Normal    SuccessfulCreate          replicaset/coredns-547b59986f          Created pod: coredns-547b59986f-bljhn
+kube-system   61m         Normal    Pulling                   pod/coredns-547b59986f-bljhn           Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.13.2-eksbuild.51"
+kube-system   61m         Normal    Pulled                    pod/coredns-547b59986f-bljhn           Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.13.2-eksbuild.51" in 1.039s (1.039s including waiting). Image size: 25614712 bytes.
+kube-system   61m         Normal    Created                   pod/coredns-547b59986f-bljhn           Container created
+kube-system   61m         Normal    Started                   pod/coredns-547b59986f-bljhn           Container started
+kube-system   59m         Normal    Scheduled                 pod/kube-proxy-wlvzw                   Successfully assigned kube-system/kube-proxy-wlvzw to ip-192-168-44-47.ec2.internal
+kube-system   59m         Normal    SuccessfulCreate          daemonset/aws-node                     Created pod: aws-node-rnr98
+kube-system   59m         Warning   FailedDaemonPod           daemonset/kube-proxy                   Found failed daemon pod kube-system/kube-proxy-pg7j2 on node ip-192-168-44-47.ec2.internal, will try to kill it
+default       59m         Normal    NodeNotReady              node/ip-192-168-44-47.ec2.internal     Node ip-192-168-44-47.ec2.internal status is now: NodeNotReady
+default       59m         Normal    Shutdown                  node/ip-192-168-44-47.ec2.internal     Shutdown manager detected shutdown event
+kube-system   59m         Normal    SuccessfulCreate          daemonset/kube-proxy                   Created pod: kube-proxy-wlvzw
+kube-system   59m         Normal    SuccessfulDelete          daemonset/kube-proxy                   Deleted pod: kube-proxy-pg7j2
+kube-system   59m         Normal    Scheduled                 pod/aws-node-rnr98                     Successfully assigned kube-system/aws-node-rnr98 to ip-192-168-44-47.ec2.internal
+kube-system   59m         Normal    SuccessfulDelete          daemonset/aws-node                     Deleted pod: aws-node-s7wxr
+kube-system   59m         Warning   FailedDaemonPod           daemonset/aws-node                     Found failed daemon pod kube-system/aws-node-s7wxr on node ip-192-168-44-47.ec2.internal, will try to kill it
+kube-system   59m         Warning   NodeShutdown              pod/kube-proxy-wlvzw                   Pod was rejected as the node is shutting down.
+kube-system   59m         Warning   NodeShutdown              pod/aws-node-rnr98                     Pod was rejected as the node is shutting down.
+kube-system   59m         Normal    Killing                   pod/aws-node-s7wxr                     Stopping container aws-node
+kube-system   59m         Normal    Killing                   pod/aws-node-s7wxr                     Stopping container aws-eks-nodeagent
+kube-system   59m         Normal    Killing                   pod/kube-proxy-pg7j2                   Stopping container kube-proxy
+kube-system   59m         Normal    SuccessfulDelete          daemonset/kube-proxy                   Deleted pod: kube-proxy-wlvzw
+kube-system   59m         Normal    SuccessfulCreate          daemonset/kube-proxy                   Created pod: kube-proxy-mfqwq
+kube-system   59m         Normal    Scheduled                 pod/aws-node-m959v                     Successfully assigned kube-system/aws-node-m959v to ip-192-168-44-47.ec2.internal
+kube-system   59m         Normal    Scheduled                 pod/kube-proxy-mfqwq                   Successfully assigned kube-system/kube-proxy-mfqwq to ip-192-168-44-47.ec2.internal
+kube-system   59m         Warning   FailedDaemonPod           daemonset/aws-node                     Found failed daemon pod kube-system/aws-node-rnr98 on node ip-192-168-44-47.ec2.internal, will try to kill it
+kube-system   59m         Normal    SuccessfulDelete          daemonset/aws-node                     Deleted pod: aws-node-rnr98
+kube-system   59m         Normal    SuccessfulCreate          daemonset/aws-node                     Created pod: aws-node-m959v
+kube-system   59m         Warning   FailedDaemonPod           daemonset/kube-proxy                   Found failed daemon pod kube-system/kube-proxy-wlvzw on node ip-192-168-44-47.ec2.internal, will try to kill it
+default       59m         Normal    DeletingNode              node/ip-192-168-44-47.ec2.internal     Deleting node ip-192-168-44-47.ec2.internal because it does not exist in the cloud provider
+default       59m         Normal    RemovingNode              node/ip-192-168-44-47.ec2.internal     Node ip-192-168-44-47.ec2.internal event: Removing Node ip-192-168-44-47.ec2.internal from Controller
+kube-system   58m         Warning   Unhealthy                 pod/metrics-server-68c65f79d8-8lcjw    Readiness probe failed: Get "https://192.168.11.57:10251/readyz": dial tcp 192.168.11.57:10251: connect: connection refused
+demo          58m         Normal    Pulling                   pod/web-64c966cf88-hhvcl               Pulling image "nginx"
+kube-system   58m         Normal    Pulling                   pod/metrics-server-68c65f79d8-744gh    Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/metrics-server:v0.9.0-eksbuild.14"
+kube-system   58m         Normal    Killing                   pod/metrics-server-68c65f79d8-8lcjw    Stopping container metrics-server
+demo          58m         Normal    SuccessfulCreate          replicaset/web-64c966cf88              Created pod: web-64c966cf88-hhvcl
+demo          58m         Normal    Killing                   pod/web-64c966cf88-wjfxx               Stopping container nginx
+demo          58m         Normal    Scheduled                 pod/web-64c966cf88-hhvcl               Successfully assigned demo/web-64c966cf88-hhvcl to ip-192-168-5-11.ec2.internal
+kube-system   58m         Normal    SuccessfulCreate          replicaset/metrics-server-68c65f79d8   Created pod: metrics-server-68c65f79d8-744gh
+kube-system   58m         Normal    Scheduled                 pod/metrics-server-68c65f79d8-744gh    Successfully assigned kube-system/metrics-server-68c65f79d8-744gh to ip-192-168-5-11.ec2.internal
+kube-system   58m         Normal    Created                   pod/metrics-server-68c65f79d8-744gh    Container created
+kube-system   58m         Normal    Started                   pod/metrics-server-68c65f79d8-744gh    Container started
+kube-system   58m         Normal    Pulled                    pod/metrics-server-68c65f79d8-744gh    Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/metrics-server:v0.9.0-eksbuild.14" in 1.615s (1.615s including waiting). Image size: 22794933 bytes.
+demo          58m         Normal    Created                   pod/web-64c966cf88-hhvcl               Container created
+demo          58m         Normal    Pulled                    pod/web-64c966cf88-hhvcl               Successfully pulled image "nginx" in 3.116s (3.116s including waiting). Image size: 63903938 bytes.
+demo          58m         Normal    Started                   pod/web-64c966cf88-hhvcl               Container started
+default       56m         Normal    NodeNotReady              node/ip-192-168-21-69.ec2.internal     Node ip-192-168-21-69.ec2.internal status is now: NodeNotReady
+default       56m         Normal    Shutdown                  node/ip-192-168-21-69.ec2.internal     Shutdown manager detected shutdown event
+kube-system   56m         Normal    Killing                   pod/aws-node-rmql9                     Stopping container aws-node
+kube-system   56m         Normal    Killing                   pod/aws-node-rmql9                     Stopping container aws-eks-nodeagent
+kube-system   56m         Normal    Killing                   pod/kube-proxy-j5htq                   Stopping container kube-proxy
+kube-system   56m         Warning   FailedDaemonPod           daemonset/aws-node                     Found failed daemon pod kube-system/aws-node-rmql9 on node ip-192-168-21-69.ec2.internal, will try to kill it
+kube-system   56m         Normal    SuccessfulCreate          daemonset/aws-node                     Created pod: aws-node-mbsnb
+kube-system   56m         Warning   NodeShutdown              pod/aws-node-mbsnb                     Pod was rejected as the node is shutting down.
+kube-system   56m         Normal    Scheduled                 pod/aws-node-mbsnb                     Successfully assigned kube-system/aws-node-mbsnb to ip-192-168-21-69.ec2.internal
+kube-system   56m         Normal    SuccessfulDelete          daemonset/kube-proxy                   Deleted pod: kube-proxy-j5htq
+kube-system   56m         Warning   FailedDaemonPod           daemonset/kube-proxy                   Found failed daemon pod kube-system/kube-proxy-j5htq on node ip-192-168-21-69.ec2.internal, will try to kill it
+kube-system   56m         Normal    SuccessfulCreate          daemonset/kube-proxy                   Created pod: kube-proxy-75kd5
+kube-system   56m         Normal    Scheduled                 pod/kube-proxy-75kd5                   Successfully assigned kube-system/kube-proxy-75kd5 to ip-192-168-21-69.ec2.internal
+kube-system   56m         Warning   NodeShutdown              pod/kube-proxy-75kd5                   Pod was rejected as the node is shutting down.
+kube-system   56m         Normal    SuccessfulDelete          daemonset/aws-node                     Deleted pod: aws-node-rmql9
+kube-system   56m         Normal    SuccessfulCreate          daemonset/aws-node                     Created pod: aws-node-gz5m9
+kube-system   56m         Normal    Scheduled                 pod/kube-proxy-qnf8r                   Successfully assigned kube-system/kube-proxy-qnf8r to ip-192-168-21-69.ec2.internal
+kube-system   56m         Normal    SuccessfulDelete          daemonset/kube-proxy                   Deleted pod: kube-proxy-75kd5
+kube-system   56m         Normal    SuccessfulDelete          daemonset/aws-node                     Deleted pod: aws-node-mbsnb
+kube-system   56m         Warning   FailedDaemonPod           daemonset/aws-node                     Found failed daemon pod kube-system/aws-node-mbsnb on node ip-192-168-21-69.ec2.internal, will try to kill it
+kube-system   56m         Normal    SuccessfulCreate          daemonset/kube-proxy                   Created pod: kube-proxy-qnf8r
+kube-system   56m         Warning   FailedDaemonPod           daemonset/kube-proxy                   Found failed daemon pod kube-system/kube-proxy-75kd5 on node ip-192-168-21-69.ec2.internal, will try to kill it
+kube-system   56m         Normal    Scheduled                 pod/aws-node-gz5m9                     Successfully assigned kube-system/aws-node-gz5m9 to ip-192-168-21-69.ec2.internal
+default       56m         Normal    DeletingNode              node/ip-192-168-21-69.ec2.internal     Deleting node ip-192-168-21-69.ec2.internal because it does not exist in the cloud provider
+default       56m         Normal    RemovingNode              node/ip-192-168-21-69.ec2.internal     Node ip-192-168-21-69.ec2.internal event: Removing Node ip-192-168-21-69.ec2.internal from Controller
+kube-system   25m         Normal    Scheduled                 pod/kube-proxy-6s22n                   Successfully assigned kube-system/kube-proxy-6s22n to ip-192-168-5-11.ec2.internal
+kube-system   25m         Normal    Killing                   pod/kube-proxy-tql8z                   Stopping container kube-proxy
+kube-system   25m         Normal    SuccessfulDelete          daemonset/kube-proxy                   Deleted pod: kube-proxy-tql8z
+kube-system   25m         Normal    SuccessfulCreate          daemonset/kube-proxy                   Created pod: kube-proxy-6s22n
+kube-system   25m         Normal    Pulling                   pod/kube-proxy-6s22n                   Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/kube-proxy:v1.36.0-eksbuild.48"
+kube-system   25m         Normal    Pulled                    pod/kube-proxy-6s22n                   Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/kube-proxy:v1.36.0-eksbuild.48" in 873ms (873ms including waiting). Image size: 35391065 bytes.
+kube-system   25m         Normal    Started                   pod/kube-proxy-6s22n                   Container started
+kube-system   25m         Normal    Created                   pod/kube-proxy-6s22n                   Container created
+kube-system   25m         Normal    Scheduled                 pod/kube-proxy-kk4wl                   Successfully assigned kube-system/kube-proxy-kk4wl to ip-192-168-51-209.ec2.internal
+kube-system   25m         Normal    Killing                   pod/kube-proxy-28lv8                   Stopping container kube-proxy
+kube-system   25m         Normal    Pulling                   pod/kube-proxy-kk4wl                   Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/kube-proxy:v1.36.0-eksbuild.48"
+kube-system   25m         Normal    SuccessfulCreate          daemonset/kube-proxy                   Created pod: kube-proxy-kk4wl
+kube-system   25m         Normal    SuccessfulDelete          daemonset/kube-proxy                   Deleted pod: kube-proxy-28lv8
+kube-system   25m         Normal    Pulled                    pod/kube-proxy-kk4wl                   Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/kube-proxy:v1.36.0-eksbuild.48" in 868ms (868ms including waiting). Image size: 35391065 bytes.
+kube-system   25m         Normal    Created                   pod/kube-proxy-kk4wl                   Container created
+kube-system   25m         Normal    Started                   pod/kube-proxy-kk4wl                   Container started
+kube-system   24m         Normal    LeaderElection            lease/cloud-controller-manager         ip-10-0-115-213.ec2.internal_f48e5df2-a2e0-45bc-a90d-0e95d2b2e3ac became leader
+kube-system   24m         Normal    LeaderElection            lease/kube-controller-manager          ip-10-0-115-213.ec2.internal_33ab58c5-ee65-4e0b-a27c-db4e5ed6520a became leader
+default       24m         Normal    RegisteredNode            node/ip-192-168-51-209.ec2.internal    Node ip-192-168-51-209.ec2.internal event: Registered Node ip-192-168-51-209.ec2.internal in Controller
+kube-system   24m         Normal    LeaderElection            lease/kube-scheduler                   ip-10-0-115-213.ec2.internal_1b07aa57-80f2-47fb-8750-cbeadaed76b7 became leader
+default       24m         Normal    RegisteredNode            node/ip-192-168-5-11.ec2.internal      Node ip-192-168-5-11.ec2.internal event: Registered Node ip-192-168-5-11.ec2.internal in Controller
+kube-system   24m         Normal    LeaderElection            lease/eks-coredns-autoscaler           ip-10-0-60-235.ec2.internal_bc0d2e3f-ff3b-42a6-b0a4-4a0f2b2ad87a became leader
+kube-system   24m         Normal    LeaderElection            lease/eks-certificates-controller      ip-10-0-60-235.ec2.internal became leader
+kube-system   24m         Normal    LeaderElection            lease/cp-vpc-resource-controller       ip-10-0-115-213.ec2.internal_6f9f1fb9-d2a9-4d82-a909-f001bb13bfa7 became leader
+kube-system   20m         Normal    Scheduled                 pod/coredns-687dddfb64-7rbr5           Successfully assigned kube-system/coredns-687dddfb64-7rbr5 to ip-192-168-51-209.ec2.internal
+kube-system   20m         Normal    ScalingReplicaSet         deployment/coredns                     Scaled up replica set coredns-687dddfb64 from 0 to 1
+kube-system   20m         Normal    Scheduled                 pod/coredns-687dddfb64-tf6gd           Successfully assigned kube-system/coredns-687dddfb64-tf6gd to ip-192-168-5-11.ec2.internal
+kube-system   20m         Normal    SuccessfulCreate          replicaset/coredns-687dddfb64          Created pod: coredns-687dddfb64-tf6gd
+kube-system   20m         Normal    SuccessfulDelete          replicaset/coredns-547b59986f          Deleted pod: coredns-547b59986f-prrlp
+kube-system   20m         Normal    Killing                   pod/coredns-547b59986f-prrlp           Stopping container coredns
+kube-system   20m         Normal    SuccessfulCreate          replicaset/coredns-687dddfb64          Created pod: coredns-687dddfb64-7rbr5
+kube-system   20m         Normal    ScalingReplicaSet         deployment/coredns                     Scaled up replica set coredns-687dddfb64 from 1 to 2
+kube-system   20m         Normal    ScalingReplicaSet         deployment/coredns                     Scaled down replica set coredns-547b59986f from 2 to 1
+kube-system   20m         Normal    Pulling                   pod/coredns-687dddfb64-7rbr5           Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.14.7-eksbuild.11"
+kube-system   20m         Normal    Pulling                   pod/coredns-687dddfb64-tf6gd           Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.14.7-eksbuild.11"
+kube-system   20m         Normal    Killing                   pod/coredns-547b59986f-bljhn           Stopping container coredns
+kube-system   20m         Normal    Created                   pod/coredns-687dddfb64-7rbr5           Container created
+kube-system   20m         Normal    SuccessfulDelete          replicaset/coredns-547b59986f          Deleted pod: coredns-547b59986f-bljhn
+kube-system   20m         Normal    Started                   pod/coredns-687dddfb64-tf6gd           Container started
+kube-system   20m         Normal    Created                   pod/coredns-687dddfb64-tf6gd           Container created
+kube-system   20m         Normal    Pulled                    pod/coredns-687dddfb64-tf6gd           Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.14.7-eksbuild.11" in 1.042s (1.042s including waiting). Image size: 25746482 bytes.
+kube-system   20m         Normal    Pulled                    pod/coredns-687dddfb64-7rbr5           Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.14.7-eksbuild.11" in 1.05s (1.05s including waiting). Image size: 25746482 bytes.
+kube-system   20m         Normal    ScalingReplicaSet         deployment/coredns                     Scaled down replica set coredns-547b59986f from 1 to 0
+kube-system   20m         Normal    Started                   pod/coredns-687dddfb64-7rbr5           Container started
+default       18m         Normal    Scheduled                 pod/dnstest                            Successfully assigned default/dnstest to ip-192-168-5-11.ec2.internal
+default       18m         Normal    Pulling                   pod/dnstest                            Pulling image "busybox:1.36"
+default       18m         Normal    Created                   pod/dnstest                            Container created
+default       18m         Normal    Pulled                    pod/dnstest                            Successfully pulled image "busybox:1.36" in 568ms (568ms including waiting). Image size: 2217006 bytes.
+default       18m         Normal    Started                   pod/dnstest                            Container started
+default       15m         Normal    NodeAllocatableEnforced   node/ip-192-168-16-172.ec2.internal    Updated Node Allocatable limit across pods
+default       15m         Normal    Starting                  node/ip-192-168-16-172.ec2.internal    Starting kubelet.
+default       15m         Warning   InvalidDiskCapacity       node/ip-192-168-16-172.ec2.internal    invalid capacity 0 on image filesystem
+default       15m         Normal    NodeHasSufficientPID      node/ip-192-168-35-221.ec2.internal    Node ip-192-168-35-221.ec2.internal status is now: NodeHasSufficientPID
+default       15m         Normal    NodeAllocatableEnforced   node/ip-192-168-35-221.ec2.internal    Updated Node Allocatable limit across pods
+default       15m         Normal    NodeHasSufficientPID      node/ip-192-168-16-172.ec2.internal    Node ip-192-168-16-172.ec2.internal status is now: NodeHasSufficientPID
+default       15m         Normal    Starting                  node/ip-192-168-35-221.ec2.internal    Starting kubelet.
+default       15m         Warning   InvalidDiskCapacity       node/ip-192-168-35-221.ec2.internal    invalid capacity 0 on image filesystem
+default       15m         Normal    NodeHasSufficientMemory   node/ip-192-168-35-221.ec2.internal    Node ip-192-168-35-221.ec2.internal status is now: NodeHasSufficientMemory
+default       15m         Normal    NodeHasNoDiskPressure     node/ip-192-168-16-172.ec2.internal    Node ip-192-168-16-172.ec2.internal status is now: NodeHasNoDiskPressure
+default       15m         Normal    NodeHasSufficientMemory   node/ip-192-168-16-172.ec2.internal    Node ip-192-168-16-172.ec2.internal status is now: NodeHasSufficientMemory
+default       15m         Normal    NodeHasNoDiskPressure     node/ip-192-168-35-221.ec2.internal    Node ip-192-168-35-221.ec2.internal status is now: NodeHasNoDiskPressure
+kube-system   15m         Normal    SuccessfulCreate          daemonset/kube-proxy                   Created pod: kube-proxy-2wklg
+kube-system   15m         Normal    Scheduled                 pod/aws-node-jdrlj                     Successfully assigned kube-system/aws-node-jdrlj to ip-192-168-16-172.ec2.internal
+kube-system   15m         Normal    SuccessfulCreate          daemonset/kube-proxy                   Created pod: kube-proxy-gzvhh
+kube-system   15m         Normal    Scheduled                 pod/kube-proxy-2wklg                   Successfully assigned kube-system/kube-proxy-2wklg to ip-192-168-16-172.ec2.internal
+kube-system   15m         Normal    Scheduled                 pod/kube-proxy-gzvhh                   Successfully assigned kube-system/kube-proxy-gzvhh to ip-192-168-35-221.ec2.internal
+kube-system   15m         Normal    SuccessfulCreate          daemonset/aws-node                     Created pod: aws-node-jdrlj
+kube-system   15m         Normal    SuccessfulCreate          daemonset/aws-node                     Created pod: aws-node-gh9lt
+kube-system   15m         Normal    Pulling                   pod/aws-node-jdrlj                     Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon-k8s-cni-init:v1.22.4-eksbuild.3"
+default       15m         Normal    Synced                    node/ip-192-168-35-221.ec2.internal    Node synced successfully
+default       15m         Normal    Synced                    node/ip-192-168-16-172.ec2.internal    Node synced successfully
+kube-system   15m         Normal    Pulling                   pod/kube-proxy-2wklg                   Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/kube-proxy:v1.36.0-eksbuild.48"
+kube-system   15m         Normal    Pulling                   pod/kube-proxy-gzvhh                   Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/kube-proxy:v1.36.0-eksbuild.48"
+kube-system   15m         Normal    Pulling                   pod/aws-node-gh9lt                     Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon-k8s-cni-init:v1.22.4-eksbuild.3"
+kube-system   15m         Normal    Scheduled                 pod/aws-node-gh9lt                     Successfully assigned kube-system/aws-node-gh9lt to ip-192-168-35-221.ec2.internal
+default       15m         Normal    RegisteredNode            node/ip-192-168-35-221.ec2.internal    Node ip-192-168-35-221.ec2.internal event: Registered Node ip-192-168-35-221.ec2.internal in Controller
+default       15m         Normal    RegisteredNode            node/ip-192-168-16-172.ec2.internal    Node ip-192-168-16-172.ec2.internal event: Registered Node ip-192-168-16-172.ec2.internal in Controller
+kube-system   15m         Normal    Pulled                    pod/kube-proxy-2wklg                   Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/kube-proxy:v1.36.0-eksbuild.48" in 2.135s (2.136s including waiting). Image size: 35391065 bytes.
+kube-system   15m         Normal    Created                   pod/kube-proxy-2wklg                   Container created
+kube-system   15m         Normal    Pulled                    pod/aws-node-jdrlj                     Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon-k8s-cni-init:v1.22.4-eksbuild.3" in 2.653s (2.653s including waiting). Image size: 69724381 bytes.
+kube-system   15m         Normal    Started                   pod/aws-node-jdrlj                     Container started
+kube-system   15m         Normal    Pulled                    pod/kube-proxy-gzvhh                   Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/kube-proxy:v1.36.0-eksbuild.48" in 2.349s (2.349s including waiting). Image size: 35391065 bytes.
+kube-system   15m         Normal    Pulled                    pod/aws-node-gh9lt                     Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon-k8s-cni-init:v1.22.4-eksbuild.3" in 2.515s (2.515s including waiting). Image size: 69724381 bytes.
+kube-system   15m         Normal    Started                   pod/aws-node-gh9lt                     Container started
+kube-system   15m         Normal    Created                   pod/aws-node-jdrlj                     Container created
+kube-system   15m         Normal    Started                   pod/kube-proxy-2wklg                   Container started
+kube-system   15m         Normal    Created                   pod/aws-node-gh9lt                     Container created
+kube-system   15m         Normal    Started                   pod/kube-proxy-gzvhh                   Container started
+kube-system   15m         Normal    Created                   pod/kube-proxy-gzvhh                   Container created
+kube-system   15m         Normal    Pulling                   pod/aws-node-jdrlj                     Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon-k8s-cni:v1.22.4-eksbuild.3"
+kube-system   15m         Normal    Pulling                   pod/aws-node-gh9lt                     Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon-k8s-cni:v1.22.4-eksbuild.3"
+kube-system   15m         Normal    Created                   pod/aws-node-jdrlj                     Container created
+kube-system   15m         Normal    Pulled                    pod/aws-node-jdrlj                     Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon-k8s-cni:v1.22.4-eksbuild.3" in 1.889s (1.889s including waiting). Image size: 57915596 bytes.
+kube-system   15m         Normal    Started                   pod/aws-node-jdrlj                     Container started
+kube-system   15m         Normal    Pulling                   pod/aws-node-jdrlj                     Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon/aws-network-policy-agent:v1.4.0-eksbuild.1"
+kube-system   15m         Normal    Created                   pod/aws-node-gh9lt                     Container created
+kube-system   15m         Normal    Pulled                    pod/aws-node-gh9lt                     Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon-k8s-cni:v1.22.4-eksbuild.3" in 1.673s (1.673s including waiting). Image size: 57915596 bytes.
+kube-system   15m         Normal    Pulling                   pod/aws-node-gh9lt                     Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon/aws-network-policy-agent:v1.4.0-eksbuild.1"
+kube-system   15m         Normal    Started                   pod/aws-node-gh9lt                     Container started
+kube-system   15m         Normal    Pulled                    pod/aws-node-jdrlj                     Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon/aws-network-policy-agent:v1.4.0-eksbuild.1" in 1.563s (1.563s including waiting). Image size: 33957519 bytes.
+kube-system   15m         Normal    Created                   pod/aws-node-jdrlj                     Container created
+kube-system   15m         Normal    Started                   pod/aws-node-jdrlj                     Container started
+kube-system   15m         Normal    Pulled                    pod/aws-node-gh9lt                     Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon/aws-network-policy-agent:v1.4.0-eksbuild.1" in 1.713s (1.713s including waiting). Image size: 33957519 bytes.
+kube-system   15m         Normal    Created                   pod/aws-node-gh9lt                     Container created
+kube-system   15m         Normal    Started                   pod/aws-node-gh9lt                     Container started
+default       15m         Normal    NodeReady                 node/ip-192-168-35-221.ec2.internal    Node ip-192-168-35-221.ec2.internal status is now: NodeReady
+default       15m         Normal    NodeReady                 node/ip-192-168-16-172.ec2.internal    Node ip-192-168-16-172.ec2.internal status is now: NodeReady
+default       15m         Normal    NodeNotSchedulable        node/ip-192-168-5-11.ec2.internal      Node ip-192-168-5-11.ec2.internal status is now: NodeNotSchedulable
+default       15m         Normal    NodeNotSchedulable        node/ip-192-168-51-209.ec2.internal    Node ip-192-168-51-209.ec2.internal status is now: NodeNotSchedulable
+demo          14m         Normal    SuccessfulCreate          replicaset/web-64c966cf88              Created pod: web-64c966cf88-fjnwk
+kube-system   14m         Normal    Scheduled                 pod/metrics-server-68c65f79d8-cjtrf    Successfully assigned kube-system/metrics-server-68c65f79d8-cjtrf to ip-192-168-35-221.ec2.internal
+kube-system   14m         Normal    Killing                   pod/coredns-687dddfb64-7rbr5           Stopping container coredns
+kube-system   14m         Normal    Scheduled                 pod/coredns-687dddfb64-hq7zt           Successfully assigned kube-system/coredns-687dddfb64-hq7zt to ip-192-168-35-221.ec2.internal
+demo          14m         Normal    Pulling                   pod/web-64c966cf88-fjnwk               Pulling image "nginx"
+demo          14m         Normal    Scheduled                 pod/web-64c966cf88-fjnwk               Successfully assigned demo/web-64c966cf88-fjnwk to ip-192-168-35-221.ec2.internal
+kube-system   14m         Normal    SuccessfulCreate          replicaset/metrics-server-68c65f79d8   Created pod: metrics-server-68c65f79d8-cjtrf
+kube-system   14m         Normal    Killing                   pod/metrics-server-68c65f79d8-rzvs7    Stopping container metrics-server
+demo          14m         Normal    Killing                   pod/web-64c966cf88-2nqhv               Stopping container nginx
+kube-system   14m         Normal    SuccessfulCreate          replicaset/coredns-687dddfb64          Created pod: coredns-687dddfb64-hq7zt
+kube-system   14m         Normal    Pulling                   pod/coredns-687dddfb64-hq7zt           Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.14.7-eksbuild.11"
+kube-system   14m         Normal    Pulling                   pod/metrics-server-68c65f79d8-cjtrf    Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/metrics-server:v0.9.0-eksbuild.14"
+kube-system   14m         Normal    Pulled                    pod/metrics-server-68c65f79d8-cjtrf    Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/metrics-server:v0.9.0-eksbuild.14" in 2.068s (2.068s including waiting). Image size: 22794933 bytes.
+kube-system   14m         Normal    Pulled                    pod/coredns-687dddfb64-hq7zt           Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.14.7-eksbuild.11" in 2.268s (2.268s including waiting). Image size: 25746482 bytes.
+kube-system   14m         Normal    Created                   pod/coredns-687dddfb64-hq7zt           Container created
+kube-system   14m         Normal    Started                   pod/coredns-687dddfb64-hq7zt           Container started
+kube-system   14m         Warning   Unhealthy                 pod/coredns-687dddfb64-hq7zt           Readiness probe failed: Get "http://192.168.39.44:8181/ready": dial tcp 192.168.39.44:8181: connect: connection refused
+kube-system   14m         Normal    Created                   pod/metrics-server-68c65f79d8-cjtrf    Container created
+kube-system   14m         Normal    Started                   pod/metrics-server-68c65f79d8-cjtrf    Container started
+demo          14m         Normal    Pulled                    pod/web-64c966cf88-fjnwk               Successfully pulled image "nginx" in 3.408s (3.408s including waiting). Image size: 63903938 bytes.
+demo          14m         Normal    Started                   pod/web-64c966cf88-fjnwk               Container started
+kube-system   14m         Warning   Unhealthy                 pod/coredns-687dddfb64-7rbr5           Readiness probe failed: Get "http://192.168.59.127:8181/ready": dial tcp 192.168.59.127:8181: connect: connection refused
+demo          14m         Normal    Created                   pod/web-64c966cf88-fjnwk               Container created
+kube-system   12m         Warning   NodeShutdown              pod/aws-node-gwrt8                     Pod was rejected as the node is shutting down.
+kube-system   12m         Normal    Scheduled                 pod/kube-proxy-pr6kl                   Successfully assigned kube-system/kube-proxy-pr6kl to ip-192-168-51-209.ec2.internal
+kube-system   12m         Normal    Killing                   pod/aws-node-xjf6m                     Stopping container aws-node
+kube-system   12m         Normal    Killing                   pod/kube-proxy-kk4wl                   Stopping container kube-proxy
+kube-system   12m         Normal    Scheduled                 pod/aws-node-gwrt8                     Successfully assigned kube-system/aws-node-gwrt8 to ip-192-168-51-209.ec2.internal
+kube-system   12m         Normal    SuccessfulDelete          daemonset/aws-node                     Deleted pod: aws-node-xjf6m
+kube-system   12m         Warning   NodeShutdown              pod/kube-proxy-pr6kl                   Pod was rejected as the node is shutting down.
+kube-system   12m         Normal    Killing                   pod/aws-node-xjf6m                     Stopping container aws-eks-nodeagent
+kube-system   12m         Normal    SuccessfulCreate          daemonset/aws-node                     Created pod: aws-node-gwrt8
+default       12m         Normal    NodeNotReady              node/ip-192-168-51-209.ec2.internal    Node ip-192-168-51-209.ec2.internal status is now: NodeNotReady
+kube-system   12m         Warning   FailedDaemonPod           daemonset/kube-proxy                   Found failed daemon pod kube-system/kube-proxy-kk4wl on node ip-192-168-51-209.ec2.internal, will try to kill it
+default       12m         Normal    Shutdown                  node/ip-192-168-51-209.ec2.internal    Shutdown manager detected shutdown event
+kube-system   12m         Normal    SuccessfulDelete          daemonset/kube-proxy                   Deleted pod: kube-proxy-kk4wl
+kube-system   12m         Warning   FailedDaemonPod           daemonset/aws-node                     Found failed daemon pod kube-system/aws-node-xjf6m on node ip-192-168-51-209.ec2.internal, will try to kill it
+kube-system   12m         Normal    SuccessfulCreate          daemonset/kube-proxy                   Created pod: kube-proxy-pr6kl
+kube-system   12m         Normal    SuccessfulCreate          daemonset/aws-node                     Created pod: aws-node-pkpwk
+kube-system   12m         Normal    SuccessfulCreate          daemonset/kube-proxy                   Created pod: kube-proxy-9rkm9
+kube-system   12m         Normal    SuccessfulDelete          daemonset/kube-proxy                   Deleted pod: kube-proxy-pr6kl
+kube-system   12m         Warning   FailedDaemonPod           daemonset/kube-proxy                   Found failed daemon pod kube-system/kube-proxy-pr6kl on node ip-192-168-51-209.ec2.internal, will try to kill it
+kube-system   12m         Normal    Scheduled                 pod/kube-proxy-9rkm9                   Successfully assigned kube-system/kube-proxy-9rkm9 to ip-192-168-51-209.ec2.internal
+kube-system   12m         Normal    Scheduled                 pod/aws-node-pkpwk                     Successfully assigned kube-system/aws-node-pkpwk to ip-192-168-51-209.ec2.internal
+kube-system   12m         Warning   FailedDaemonPod           daemonset/aws-node                     Found failed daemon pod kube-system/aws-node-gwrt8 on node ip-192-168-51-209.ec2.internal, will try to kill it
+kube-system   12m         Normal    SuccessfulDelete          daemonset/aws-node                     Deleted pod: aws-node-gwrt8
+default       11m         Normal    DeletingNode              node/ip-192-168-51-209.ec2.internal    Deleting node ip-192-168-51-209.ec2.internal because it does not exist in the cloud provider
+default       11m         Normal    RemovingNode              node/ip-192-168-51-209.ec2.internal    Node ip-192-168-51-209.ec2.internal event: Removing Node ip-192-168-51-209.ec2.internal from Controller
+demo          11m         Normal    Scheduled                 pod/web-64c966cf88-csq45               Successfully assigned demo/web-64c966cf88-csq45 to ip-192-168-16-172.ec2.internal
+demo          11m         Normal    SuccessfulCreate          replicaset/web-64c966cf88              Created pod: web-64c966cf88-csq45
+kube-system   11m         Normal    Killing                   pod/coredns-687dddfb64-tf6gd           Stopping container coredns
+kube-system   11m         Normal    SuccessfulCreate          replicaset/coredns-687dddfb64          Created pod: coredns-687dddfb64-7t2hx
+kube-system   11m         Normal    SuccessfulCreate          replicaset/metrics-server-68c65f79d8   Created pod: metrics-server-68c65f79d8-xsgt9
+kube-system   11m         Normal    Killing                   pod/metrics-server-68c65f79d8-744gh    Stopping container metrics-server
+demo          11m         Normal    Killing                   pod/web-64c966cf88-hhvcl               Stopping container nginx
+kube-system   11m         Normal    Scheduled                 pod/coredns-687dddfb64-7t2hx           Successfully assigned kube-system/coredns-687dddfb64-7t2hx to ip-192-168-16-172.ec2.internal
+kube-system   11m         Normal    Scheduled                 pod/metrics-server-68c65f79d8-xsgt9    Successfully assigned kube-system/metrics-server-68c65f79d8-xsgt9 to ip-192-168-16-172.ec2.internal
+kube-system   11m         Normal    Pulling                   pod/metrics-server-68c65f79d8-xsgt9    Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/metrics-server:v0.9.0-eksbuild.14"
+demo          11m         Normal    Pulling                   pod/web-64c966cf88-csq45               Pulling image "nginx"
+kube-system   11m         Normal    Pulling                   pod/coredns-687dddfb64-7t2hx           Pulling image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.14.7-eksbuild.11"
+kube-system   11m         Warning   Unhealthy                 pod/coredns-687dddfb64-tf6gd           Readiness probe failed: Get "http://192.168.19.190:8181/ready": dial tcp 192.168.19.190:8181: connect: connection refused
+kube-system   11m         Normal    Created                   pod/metrics-server-68c65f79d8-xsgt9    Container created
+kube-system   11m         Normal    Pulled                    pod/metrics-server-68c65f79d8-xsgt9    Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/metrics-server:v0.9.0-eksbuild.14" in 2.457s (2.457s including waiting). Image size: 22794933 bytes.
+kube-system   11m         Normal    Pulled                    pod/coredns-687dddfb64-7t2hx           Successfully pulled image "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.14.7-eksbuild.11" in 2.231s (2.231s including waiting). Image size: 25746482 bytes.
+kube-system   11m         Warning   Unhealthy                 pod/coredns-687dddfb64-7t2hx           Readiness probe failed: Get "http://192.168.2.255:8181/ready": dial tcp 192.168.2.255:8181: connect: connection refused
+kube-system   11m         Normal    Started                   pod/coredns-687dddfb64-7t2hx           Container started
+kube-system   11m         Normal    Created                   pod/coredns-687dddfb64-7t2hx           Container created
+kube-system   11m         Normal    Started                   pod/metrics-server-68c65f79d8-xsgt9    Container started
+demo          11m         Normal    Pulled                    pod/web-64c966cf88-csq45               Successfully pulled image "nginx" in 3.382s (3.382s including waiting). Image size: 63903938 bytes.
+demo          11m         Normal    Created                   pod/web-64c966cf88-csq45               Container created
+demo          11m         Normal    Started                   pod/web-64c966cf88-csq45               Container started
+kube-system   9m9s        Warning   FailedDaemonPod           daemonset/kube-proxy                   Found failed daemon pod kube-system/kube-proxy-6s22n on node ip-192-168-5-11.ec2.internal, will try to kill it
+kube-system   9m9s        Warning   NodeShutdown              pod/kube-proxy-c5ckt                   Pod was rejected as the node is shutting down.
+kube-system   9m9s        Normal    Killing                   pod/aws-node-7rtnw                     Stopping container aws-eks-nodeagent
+kube-system   9m9s        Normal    Killing                   pod/aws-node-7rtnw                     Stopping container aws-node
+kube-system   9m9s        Normal    SuccessfulCreate          daemonset/kube-proxy                   Created pod: kube-proxy-c5ckt
+kube-system   9m9s        Warning   FailedDaemonPod           daemonset/aws-node                     Found failed daemon pod kube-system/aws-node-7rtnw on node ip-192-168-5-11.ec2.internal, will try to kill it
+kube-system   9m9s        Normal    SuccessfulDelete          daemonset/aws-node                     Deleted pod: aws-node-7rtnw
+kube-system   9m9s        Normal    SuccessfulCreate          daemonset/aws-node                     Created pod: aws-node-25xtn
+kube-system   9m9s        Normal    Scheduled                 pod/kube-proxy-c5ckt                   Successfully assigned kube-system/kube-proxy-c5ckt to ip-192-168-5-11.ec2.internal
+default       9m9s        Normal    NodeNotReady              node/ip-192-168-5-11.ec2.internal      Node ip-192-168-5-11.ec2.internal status is now: NodeNotReady
+default       9m9s        Normal    Shutdown                  node/ip-192-168-5-11.ec2.internal      Shutdown manager detected shutdown event
+kube-system   9m9s        Normal    SuccessfulDelete          daemonset/kube-proxy                   Deleted pod: kube-proxy-6s22n
+kube-system   9m9s        Normal    Killing                   pod/kube-proxy-6s22n                   Stopping container kube-proxy
+kube-system   9m9s        Normal    Scheduled                 pod/aws-node-25xtn                     Successfully assigned kube-system/aws-node-25xtn to ip-192-168-5-11.ec2.internal
+kube-system   9m9s        Warning   NodeShutdown              pod/aws-node-25xtn                     Pod was rejected as the node is shutting down.
+kube-system   9m8s        Normal    SuccessfulCreate          daemonset/kube-proxy                   Created pod: kube-proxy-v2shk
+kube-system   9m8s        Normal    SuccessfulDelete          daemonset/aws-node                     Deleted pod: aws-node-25xtn
+kube-system   9m8s        Warning   FailedDaemonPod           daemonset/aws-node                     Found failed daemon pod kube-system/aws-node-25xtn on node ip-192-168-5-11.ec2.internal, will try to kill it
+kube-system   9m8s        Warning   FailedDaemonPod           daemonset/kube-proxy                   Found failed daemon pod kube-system/kube-proxy-c5ckt on node ip-192-168-5-11.ec2.internal, will try to kill it
+kube-system   9m8s        Normal    SuccessfulDelete          daemonset/kube-proxy                   Deleted pod: kube-proxy-c5ckt
+kube-system   9m7s        Normal    SuccessfulCreate          daemonset/aws-node                     Created pod: aws-node-29vmg
+kube-system   9m7s        Normal    Scheduled                 pod/aws-node-29vmg                     Successfully assigned kube-system/aws-node-29vmg to ip-192-168-5-11.ec2.internal
+kube-system   9m7s        Normal    Scheduled                 pod/kube-proxy-v2shk                   Successfully assigned kube-system/kube-proxy-v2shk to ip-192-168-5-11.ec2.internal
+default       8m34s       Normal    DeletingNode              node/ip-192-168-5-11.ec2.internal      Deleting node ip-192-168-5-11.ec2.internal because it does not exist in the cloud provider
+default       8m31s       Normal    RemovingNode              node/ip-192-168-5-11.ec2.internal      Node ip-192-168-5-11.ec2.internal event: Removing Node ip-192-168-5-11.ec2.internal from Controller
+ubuntu@EKSClient:~$ ^C
+ubuntu@EKSClient:~$ kubectl get deploy,statefulset,daemonset -A
+NAMESPACE     NAME                             READY   UP-TO-DATE   AVAILABLE   AGE
+demo          deployment.apps/web              2/2     2            2           139m
+kube-system   deployment.apps/coredns          2/2     2            2           150m
+kube-system   deployment.apps/metrics-server   2/2     2            2           145m
+
+NAMESPACE     NAME                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
+kube-system   daemonset.apps/aws-node     2         2         2       2            2           <none>          150m
+kube-system   daemonset.apps/kube-proxy   2         2         2       2            2           <none>          150m
+ubuntu@EKSClient:~$ kubectl top pods -A
+NAMESPACE     NAME                              CPU(cores)   MEMORY(bytes)
+demo          web-64c966cf88-csq45              0m           3Mi
+demo          web-64c966cf88-fjnwk              0m           3Mi
+kube-system   aws-node-gh9lt                    4m           53Mi
+kube-system   aws-node-jdrlj                    4m           53Mi
+kube-system   coredns-687dddfb64-7t2hx          1m           10Mi
+kube-system   coredns-687dddfb64-hq7zt          1m           11Mi
+kube-system   kube-proxy-2wklg                  1m           12Mi
+kube-system   kube-proxy-gzvhh                  1m           12Mi
+kube-system   metrics-server-68c65f79d8-cjtrf   2m           18Mi
+kube-system   metrics-server-68c65f79d8-xsgt9   3m           17Mi
+ubuntu@EKSClient:~$ kubectl run dns-test \
+  --image=busybox:1.36 \
+  --rm -it --restart=Never -- nslookup kubernetes.default
+Server:         10.100.0.10
+Address:        10.100.0.10:53
+
+** server can't find kubernetes.default: NXDOMAIN
+
+** server can't find kubernetes.default: NXDOMAIN
+
+All commands and output from this session will be recorded in container logs, including credentials and sensitive information passed through the command prompt.
+If you don't see a command prompt, try pressing enter.
+warning: couldn't attach to pod/dns-test, falling back to streaming logs: unable to upgrade connection: container dns-test not found in pod dns-test_default
+Server:         10.100.0.10
+Address:        10.100.0.10:53
+
+** server can't find kubernetes.default: NXDOMAIN
+
+** server can't find kubernetes.default: NXDOMAIN
+
+pod "dns-test" deleted from default namespace
+pod default/dns-test terminated (Error)
+ubuntu@EKSClient:~$ kubectl get daemonset aws-node -n kube-system
+NAME       DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
+aws-node   2         2         2       2            2           <none>          151m
+ubuntu@EKSClient:~$ kubectl get daemonset kube-proxy -n kube-system
+NAME         DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
+kube-proxy   2         2         2       2            2           <none>          151m
+ubuntu@EKSClient:~$ aws eks describe-cluster \
+  --name $CLUSTER \
+  --region $REGION \
+  --query "cluster.logging.clusterLogging"
+[
+    {
+        "types": [
+            "api",
+            "audit",
+            "authenticator",
+            "controllerManager",
+            "scheduler"
+        ],
+        "enabled": false
+    }
+]
+ubuntu@EKSClient:~$ aws eks describe-update \
+  --name $CLUSTER \
+  --region $REGION \
+  --update-id $(aws eks list-updates --name $CLUSTER --region $REGION --query "updateIds[-1]" --output text)
+{
+    "update": {
+        "id": "c84ac538-3184-3d9b-8507-72bdd0c9cec9",
+        "status": "Successful",
+        "type": "VersionUpdate",
+        "params": [
+            {
+                "type": "Version",
+                "value": "1.36"
+            },
+            {
+                "type": "PlatformVersion",
+                "value": "eks.15"
+            }
+        ],
+        "createdAt": "2026-10-24T05:50:49.217000+00:00",
+        "errors": []
+    }
+}
+ubuntu@EKSClient:~$ kubectl version
+Client Version: v1.37.1
+Kustomize Version: v5.8.1
+Server Version: v1.36.4-eks-b9510e3
+ubuntu@EKSClient:~$ eksctl get addon \
+  --cluster $CLUSTER \
+  --region $REGION
+2026-10-24 06:26:17 [ℹ]  Kubernetes version "1.36" in use by cluster "my-eks-cluster"
+2026-10-24 06:26:17 [ℹ]  getting all addons
+2026-10-24 06:26:19 [ℹ]  to see issues for an addon run `eksctl get addon --name <addon-name> --cluster <cluster-name>`
+NAME            VERSION                 STATUS  ISSUES  IAMROLE UPDATE AVAILABLE                                                                 CONFIGURATION VALUES     NAMESPACE       POD IDENTITY ASSOCIATION ROLES
+coredns         v1.14.7-eksbuild.11     ACTIVE  0               v1.14.7-eksbuild.19                                                              kube-system
+kube-proxy      v1.36.0-eksbuild.48     ACTIVE  0               v1.36.0-eksbuild.55                                                              kube-system
+metrics-server  v0.9.0-eksbuild.14      ACTIVE  0                                                                                                kube-system
+vpc-cni         v1.22.4-eksbuild.3      ACTIVE  0               v1.23.2-eksbuild.6,v1.23.2-eksbuild.4,v1.23.2-eksbuild.3,v1.23.2-eksbuild.1,v1.23.1-eksbuild.1,v1.23.0-eksbuild.1,v1.22.4-eksbuild.8,v1.22.4-eksbuild.6,v1.22.4-eksbuild.5                                kube-system
+ubuntu@EKSClient:~$
+ubuntu@EKSClient:~$ aws eks list-insights \
+  --cluster-name $CLUSTER \
+  --region $REGION \
+  --filter kubernetesVersions=1.37 \
+  --query "insights[].{Name:name,Status:insightStatus.status}" \
+  --output table
+------------------------------------------------------------
+|                       ListInsights                       |
++-----------------------------------------------+----------+
+|                     Name                      | Status   |
++-----------------------------------------------+----------+
+|  Deprecated APIs removed in Kubernetes v1.37  |  PASSING |
++-----------------------------------------------+----------+
+ubuntu@EKSClient:~$ eksctl get addon --cluster $CLUSTER --region $REGION
+2026-10-24 06:27:45 [ℹ]  Kubernetes version "1.36" in use by cluster "my-eks-cluster"
+2026-10-24 06:27:45 [ℹ]  getting all addons
+2026-10-24 06:27:47 [ℹ]  to see issues for an addon run `eksctl get addon --name <addon-name> --cluster <cluster-name>`
+NAME            VERSION                 STATUS  ISSUES  IAMROLE UPDATE AVAILABLE                                                                 CONFIGURATION VALUES     NAMESPACE       POD IDENTITY ASSOCIATION ROLES
+coredns         v1.14.7-eksbuild.11     ACTIVE  0               v1.14.7-eksbuild.19                                                              kube-system
+kube-proxy      v1.36.0-eksbuild.48     ACTIVE  0               v1.36.0-eksbuild.55                                                              kube-system
+metrics-server  v0.9.0-eksbuild.14      ACTIVE  0                                                                                                kube-system
+vpc-cni         v1.22.4-eksbuild.3      ACTIVE  0               v1.23.2-eksbuild.6,v1.23.2-eksbuild.4,v1.23.2-eksbuild.3,v1.23.2-eksbuild.1,v1.23.1-eksbuild.1,v1.23.0-eksbuild.1,v1.22.4-eksbuild.8,v1.22.4-eksbuild.6,v1.22.4-eksbuild.5                                kube-system
+ubuntu@EKSClient:~$ kubectl -n kube-system rollout status deployment/coredns
+deployment "coredns" successfully rolled out
+ubuntu@EKSClient:~$ kubectl get --raw='/readyz?verbose'
+[+]ping ok
+[+]log ok
+[+]etcd ok
+[+]etcd-readiness ok
+[+]kms-providers ok
+[+]informer-sync ok
+[+]poststarthook/start-apiserver-admission-initializer ok
+[+]poststarthook/generic-apiserver-start-informers ok
+[+]poststarthook/priority-and-fairness-config-consumer ok
+[+]poststarthook/priority-and-fairness-filter ok
+[+]poststarthook/storage-object-count-tracker-hook ok
+[+]poststarthook/start-apiextensions-informers ok
+[+]poststarthook/start-apiextensions-controllers ok
+[+]poststarthook/crd-informer-synced ok
+[+]poststarthook/start-system-namespaces-controller ok
+[+]poststarthook/peer-endpoint-reconciler-controller ok
+[+]poststarthook/start-cluster-authentication-info-controller ok
+[+]poststarthook/start-kube-apiserver-identity-lease-controller ok
+[+]poststarthook/start-kube-apiserver-identity-lease-garbage-collector ok
+[+]poststarthook/storage-readiness ok
+[+]poststarthook/start-legacy-token-tracking-controller ok
+[+]poststarthook/start-service-ip-repair-controllers ok
+[+]poststarthook/rbac/bootstrap-roles ok
+[+]poststarthook/scheduling/bootstrap-system-priority-classes ok
+[+]poststarthook/priority-and-fairness-config-producer ok
+[+]poststarthook/bootstrap-controller ok
+[+]poststarthook/start-kubernetes-service-cidr-controller ok
+[+]poststarthook/aggregator-reload-proxy-client-cert ok
+[+]poststarthook/start-kube-aggregator-informers ok
+[+]poststarthook/apiservice-status-local-available-controller ok
+[+]poststarthook/apiservice-status-remote-available-controller ok
+[+]poststarthook/apiservice-registration-controller ok
+[+]poststarthook/apiservice-discovery-controller ok
+[+]poststarthook/kube-apiserver-autoregistration ok
+[+]autoregister-completion ok
+[+]poststarthook/apiservice-openapi-controller ok
+[+]poststarthook/apiservice-openapiv3-controller ok
+[+]shutdown ok
+readyz check passed
+ubuntu@EKSClient:~$ kubectl get componentstatuses
+Warning: v1 ComponentStatus is deprecated in v1.19+
+NAME                 STATUS    MESSAGE   ERROR
+controller-manager   Healthy   ok
+scheduler            Healthy   ok
+etcd-0               Healthy   ok
+ubuntu@EKSClient:~$
